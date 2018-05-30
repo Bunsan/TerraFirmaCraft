@@ -172,18 +172,9 @@ public final class ItemsTFC
             simpleItems.add(register(r, "ceramics/fire_clay", new Item(), CT_MISC));
         }
 
-        /*for (Agriculture.Crop crop : Agriculture.Crop.values())
-            //(BlockCropsTFC crop : BlocksTFC.getAllCropBlocks())
-        {
-            for (Rock rock : Rock.values()) {
-                simpleItems.add(register(r, "crops/seedbag/" + crop.name().toLowerCase(), new ItemSeedsTFC(BlockRockVariant.get(rock, Rock.Type.FARMLAND), BlockCropsTFC.get(), CT_WOOD)); }
-        }
-        */
         for (Agriculture.Crop seedbag : Agriculture.Crop.values())
-        {
-               // for (Rock rock : Rock.values())
-                    simpleItems.add(register(r, "crops/seedbag/" + seedbag.name().toLowerCase(), (new ItemSeeds((BlockCropsTFC.get(seedbag)), Blocks.FARMLAND/*(BlockRockVariant.get(rock, Rock.Type.FARMLAND))*/)), CT_MISC));
-        }
+            simpleItems.add(register(r, "crops/seedbag/" + seedbag.name().toLowerCase(), (new ItemSeeds((BlockCropsTFC.get(seedbag)), Blocks.FARMLAND)), CT_PLANTS));
+
 
         // FLAT
         for (Rock rock : Rock.values())

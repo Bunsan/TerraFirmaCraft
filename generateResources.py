@@ -760,28 +760,28 @@ for crop_type in CROP_TYPES:
     blockstate(('crop', crop_type), 'crop', textures={
         'crop': 'tfc:blocks/crops/%s_0' % crop_type
     }, variants={
-        ('stage=0'): {'model': 'crop', 'textures': {'crop': 'tfc:blocks/crops/%s_0' % crop_type}},
-        ('stage=1'): {'model': 'crop', 'textures': {'crop': 'tfc:blocks/crops/%s_1' % crop_type}},
-        ('stage=2'): {'model': 'crop', 'textures': {'crop': 'tfc:blocks/crops/%s_2' % crop_type}},
-        ('stage=3'): {'model': 'crop', 'textures': {'crop': 'tfc:blocks/crops/%s_3' % crop_type}},
-        ('stage=4'): {'model': 'crop', 'textures': {'crop': 'tfc:blocks/crops/%s_4' % crop_type}},
-        ('stage=5'): {'model': 'crop', 'textures': {'crop': 'tfc:blocks/crops/%s_5' % crop_type}},
-        ('stage=6'): {'model': 'crop', 'textures': {'crop': 'tfc:blocks/crops/%s_6' % crop_type}},
-        ('stage=7'): {'model': 'crop', 'textures': {'crop': 'tfc:blocks/crops/%s_7' % crop_type}}
+        ('stage=0'): {'model': 'crop', 'textures': {'crops': 'tfc:blocks/crops/%s_0' % crop_type}},
+        ('stage=1'): {'model': 'crop', 'textures': {'crops': 'tfc:blocks/crops/%s_1' % crop_type}},
+        ('stage=2'): {'model': 'crop', 'textures': {'crops': 'tfc:blocks/crops/%s_2' % crop_type}},
+        ('stage=3'): {'model': 'crop', 'textures': {'crops': 'tfc:blocks/crops/%s_3' % crop_type}},
+        ('stage=4'): {'model': 'crop', 'textures': {'crops': 'tfc:blocks/crops/%s_4' % crop_type}},
+        ('stage=5'): {'model': 'crop', 'textures': {'crops': 'tfc:blocks/crops/%s_5' % crop_type}},
+        ('stage=6'): {'model': 'crop', 'textures': {'crops': 'tfc:blocks/crops/%s_6' % crop_type}},
+        ('stage=7'): {'model': 'crop', 'textures': {'crops': 'tfc:blocks/crops/%s_7' % crop_type}}
     })
 for crop_tall_type in CROP_TALL_TYPES:
     # CROPS
     blockstate(('crop', crop_tall_type), 'tfc:crops_tall', textures={
-        'crop': 'tfc:blocks/crops/%s_0' % crop_tall_type
+        'crops': 'tfc:blocks/crops/%s_0' % crop_tall_type
     }, variants={
-        ('stage=0'): {'model': 'tfc:crops_tall', 'textures': {'crop': 'tfc:blocks/crops/%s_0' % crop_tall_type}},
-        ('stage=1'): {'model': 'tfc:crops_tall', 'textures': {'crop': 'tfc:blocks/crops/%s_1' % crop_tall_type}},
-        ('stage=2'): {'model': 'tfc:crops_tall', 'textures': {'crop': 'tfc:blocks/crops/%s_2' % crop_tall_type}},
-        ('stage=3'): {'model': 'tfc:crops_tall', 'textures': {'crop': 'tfc:blocks/crops/%s_3' % crop_tall_type}},
-        ('stage=4'): {'model': 'tfc:crops_tall', 'textures': {'crop': 'tfc:blocks/crops/%s_4' % crop_tall_type}},
-        ('stage=5'): {'model': 'tfc:crops_tall', 'textures': {'crop': 'tfc:blocks/crops/%s_5' % crop_tall_type}},
-        ('stage=6'): {'model': 'tfc:crops_tall', 'textures': {'crop': 'tfc:blocks/crops/%s_6' % crop_tall_type}},
-        ('stage=7'): {'model': 'tfc:crops_tall', 'textures': {'crop': 'tfc:blocks/crops/%s_7' % crop_tall_type}}
+        ('stage=0'): {'model': 'tfc:crops_tall', 'textures': {'crops': 'tfc:blocks/crops/%s_0' % crop_tall_type}},
+        ('stage=1'): {'model': 'tfc:crops_tall', 'textures': {'crops': 'tfc:blocks/crops/%s_1' % crop_tall_type}},
+        ('stage=2'): {'model': 'tfc:crops_tall', 'textures': {'crops': 'tfc:blocks/crops/%s_2' % crop_tall_type}},
+        ('stage=3'): {'model': 'tfc:crops_tall', 'textures': {'crops': 'tfc:blocks/crops/%s_3' % crop_tall_type}},
+        ('stage=4'): {'model': 'tfc:crops_tall', 'textures': {'crops': 'tfc:blocks/crops/%s_4' % crop_tall_type}},
+        ('stage=5'): {'model': 'tfc:crops_tall', 'textures': {'crops': 'tfc:blocks/crops/%s_5' % crop_tall_type}},
+        ('stage=6'): {'model': 'tfc:crops_tall', 'textures': {'crops': 'tfc:blocks/crops/%s_6' % crop_tall_type}},
+        ('stage=7'): {'model': 'tfc:crops_tall', 'textures': {'crops': 'tfc:blocks/crops/%s_7' % crop_tall_type}}
     })
 
 #   _____ _

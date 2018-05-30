@@ -305,7 +305,7 @@ public final class BlocksTFC
 
             for (Agriculture.Crop crop : Agriculture.Crop.values())
             {
-                crops.add(register(r, "crop/" + crop.name().toLowerCase(), new BlockCropsTFC(crop), CT_PLANTS));
+                crops.add(register(r, "crops/" + crop.name().toLowerCase(), new BlockCropsTFC(crop), CT_PLANTS));
             }
 
             allCropBlocks = crops.build();
