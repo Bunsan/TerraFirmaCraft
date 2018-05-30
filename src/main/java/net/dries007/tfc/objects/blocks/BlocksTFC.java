@@ -21,9 +21,13 @@ import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.registries.IForgeRegistry;
 
 import net.dries007.tfc.TerraFirmaCraft;
+import net.dries007.tfc.objects.Agriculture;
 import net.dries007.tfc.objects.Ore;
 import net.dries007.tfc.objects.Rock;
 import net.dries007.tfc.objects.Wood;
+import net.dries007.tfc.objects.blocks.plant.crops.BlockCropsTFC;
+import net.dries007.tfc.objects.blocks.plant.fruittrees.BlockFruitLeaves;
+import net.dries007.tfc.objects.blocks.plant.fruittrees.BlockFruitSapling;
 import net.dries007.tfc.objects.blocks.stone.BlockButtonStoneTFC;
 import net.dries007.tfc.objects.blocks.stone.BlockOreTFC;
 import net.dries007.tfc.objects.blocks.stone.BlockRockVariant;
@@ -109,6 +113,9 @@ public final class BlocksTFC
     private static ImmutableList<BlockStairsTFC> allStairsBlocks;
     private static ImmutableList<BlockSlabTFC.Half> allSlabBlocks;
     private static ImmutableList<BlockChestTFC> allChestBlocks;
+    private static ImmutableList<BlockFruitSapling> allFruitSaplingBlocks;
+    private static ImmutableList<BlockFruitLeaves> allFruitLeafBlocks;
+    private static ImmutableList<BlockCropsTFC> allCropBlocks;
 
     public static ImmutableList<Block> getAllNormalItemBlocks()
     {
@@ -184,6 +191,12 @@ public final class BlocksTFC
     {
         return allChestBlocks;
     }
+
+    public static ImmutableList<BlockFruitSapling> getAllFruitSaplingBlocks() { return allFruitSaplingBlocks; }
+
+    public static ImmutableList<BlockFruitLeaves> getAllFruitLeafBlocks() { return allFruitLeafBlocks; }
+
+    public static ImmutableList<BlockCropsTFC> getAllCropBlocks() { return allCropBlocks; }
 
     @SubscribeEvent
     public static void registerBlocks(RegistryEvent.Register<Block> event) {
@@ -270,6 +283,34 @@ public final class BlocksTFC
             // doors are special
             inventoryItemBlocks.addAll(allTrapDoorWoodBlocks);
             normalItemBlocks.addAll(allChestBlocks);
+        }
+        {
+            Builder<BlockFruitSapling> fruitSaplings = ImmutableList.builder();
+            Builder<BlockFruitLeaves> fruitLeaves = ImmutableList.builder();
+
+            for (Agriculture.FruitTree fruitTree : Agriculture.FruitTree.values())
+            {
+                fruitSaplings.add(register(r, "fruit_tree/sapling/" + fruitTree.name().toLowerCase(), new BlockFruitSapling(fruitTree), CT_PLANTS));
+                fruitLeaves.add(register(r, "fruit_tree/leaves/" + fruitTree.name().toLowerCase(), new BlockFruitLeaves(fruitTree), CT_PLANTS));
+            }
+
+            allFruitSaplingBlocks = fruitSaplings.build();
+            allFruitLeafBlocks = fruitLeaves.build();
+
+            inventoryItemBlocks.addAll(allFruitSaplingBlocks);
+            normalItemBlocks.addAll(allFruitLeafBlocks);
+        }
+        {
+            Builder<BlockCropsTFC> crops = ImmutableList.builder();
+
+            for (Agriculture.Crop crop : Agriculture.Crop.values())
+            {
+                crops.add(register(r, "crop/" + crop.name().toLowerCase(), new BlockCropsTFC(crop), CT_PLANTS));
+            }
+
+            allCropBlocks = crops.build();
+
+            //inventoryItemBlocks.addAll(allCropBlocks);
         }
 
         {

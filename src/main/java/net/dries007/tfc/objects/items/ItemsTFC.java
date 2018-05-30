@@ -9,10 +9,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import net.minecraft.block.Block;
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemBlock;
-import net.minecraft.item.ItemSlab;
-import net.minecraft.item.ItemStack;
+import net.minecraft.init.Blocks;
+import net.minecraft.item.*;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -22,6 +20,7 @@ import net.minecraftforge.registries.IForgeRegistry;
 import net.dries007.tfc.objects.*;
 import net.dries007.tfc.objects.blocks.BlockSlabTFC;
 import net.dries007.tfc.objects.blocks.BlocksTFC;
+import net.dries007.tfc.objects.blocks.plant.crops.BlockCropsTFC;
 import net.dries007.tfc.objects.blocks.wood.BlockDoorTFC;
 import net.dries007.tfc.objects.blocks.wood.BlockLogTFC;
 import net.dries007.tfc.objects.items.ceramics.*;
@@ -72,6 +71,7 @@ public final class ItemsTFC
     {
         return allGemItems;
     }
+
 
     @SuppressWarnings("ConstantConditions")
     @SubscribeEvent
@@ -170,6 +170,19 @@ public final class ItemsTFC
             registerPottery(simpleItems, r, "ceramics/unfired/fire_brick", "ceramics/fired/fire_brick", new ItemUnfiredPottery(new ItemFiredPottery()));
 
             simpleItems.add(register(r, "ceramics/fire_clay", new Item(), CT_MISC));
+        }
+
+        /*for (Agriculture.Crop crop : Agriculture.Crop.values())
+            //(BlockCropsTFC crop : BlocksTFC.getAllCropBlocks())
+        {
+            for (Rock rock : Rock.values()) {
+                simpleItems.add(register(r, "crops/seedbag/" + crop.name().toLowerCase(), new ItemSeedsTFC(BlockRockVariant.get(rock, Rock.Type.FARMLAND), BlockCropsTFC.get(), CT_WOOD)); }
+        }
+        */
+        for (Agriculture.Crop seedbag : Agriculture.Crop.values())
+        {
+               // for (Rock rock : Rock.values())
+                    simpleItems.add(register(r, "crops/seedbag/" + seedbag.name().toLowerCase(), (new ItemSeeds((BlockCropsTFC.get(seedbag)), Blocks.FARMLAND/*(BlockRockVariant.get(rock, Rock.Type.FARMLAND))*/)), CT_MISC));
         }
 
         // FLAT

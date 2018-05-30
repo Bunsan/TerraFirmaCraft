@@ -36,6 +36,8 @@ import net.dries007.tfc.objects.Ore;
 import net.dries007.tfc.objects.Rock;
 import net.dries007.tfc.objects.blocks.BlockSlabTFC;
 import net.dries007.tfc.objects.blocks.BlocksTFC;
+import net.dries007.tfc.objects.blocks.plant.fruittrees.BlockFruitLeaves;
+import net.dries007.tfc.objects.blocks.plant.fruittrees.BlockFruitSapling;
 import net.dries007.tfc.objects.blocks.stone.BlockFarmlandTFC;
 import net.dries007.tfc.objects.blocks.stone.BlockOreTFC;
 import net.dries007.tfc.objects.blocks.stone.BlockRockVariant;
@@ -105,19 +107,28 @@ public final class ClientRegisterEvents
         for (Block block : BlocksTFC.getAllDoorBlocks())
             ModelLoader.setCustomStateMapper(block, new StateMap.Builder().ignore(BlockDoor.POWERED).build());
 
+        for (Block block : BlocksTFC.getAllChestBlocks())
+            ModelLoader.setCustomStateMapper(block, new StateMap.Builder().ignore(BlockChest.FACING).build());
+        ClientRegistry.bindTileEntitySpecialRenderer(TEChestTFC.class, new TESRChestTFC());
+
         for (BlockSlabTFC.Half block : BlocksTFC.getAllSlabBlocks())
         {
             ModelLoader.setCustomStateMapper(block, new StateMap.Builder().ignore(BlockSlabTFC.VARIANT).build());
             ModelLoader.setCustomStateMapper(block.doubleSlab, new StateMap.Builder().ignore(BlockSlabTFC.VARIANT).build());
         }
 
+        for (Block block : BlocksTFC.getAllFruitSaplingBlocks())
+            ModelLoader.setCustomStateMapper(block, new StateMap.Builder().ignore(BlockFruitSapling.STAGE).build());
+
+        for (Block block : BlocksTFC.getAllFruitLeafBlocks())
+            ModelLoader.setCustomStateMapper(block, new StateMap.Builder().ignore(BlockFruitLeaves.CHECK_DECAY, BlockFruitLeaves.DECAYABLE).build());
+
+        for (Block block : BlocksTFC.getAllCropBlocks())
+            ModelLoader.setCustomStateMapper(block, new StateMap.Builder().build());
+
         BlocksTFC.getAllBlockRockVariants().stream().filter(x -> x.type == Rock.Type.FARMLAND).forEach(e ->
             ModelLoader.setCustomStateMapper(e, new StateMap.Builder().ignore(BlockFarmlandTFC.MOISTURE).build())
         );
-
-        for (Block block : BlocksTFC.getAllChestBlocks())
-            ModelLoader.setCustomStateMapper(block, new StateMap.Builder().ignore(BlockChest.FACING).build());
-        ClientRegistry.bindTileEntitySpecialRenderer(TEChestTFC.class, new TESRChestTFC());
 
         ModelLoader.setCustomStateMapper(BlocksTFC.PIT_KILN, blockIn -> ImmutableMap.of(BlocksTFC.PIT_KILN.getDefaultState(), new ModelResourceLocation("tfc:empty")));
         ClientRegistry.bindTileEntitySpecialRenderer(TEPitKiln.class, new TESRPitKiln());
@@ -153,6 +164,10 @@ public final class ClientRegisterEvents
         blockcolors.registerBlockColorHandler((state, worldIn, pos, tintIndex) ->
                         worldIn != null && pos != null ? BiomeColorHelper.getFoliageColorAtPos(worldIn, pos) : ColorizerFoliage.getFoliageColorBasic(),
                 BlocksTFC.getAllLeafBlocks().toArray(new Block[0]));
+
+        blockcolors.registerBlockColorHandler((state, worldIn, pos, tintIndex) ->
+                worldIn != null && pos != null ? BiomeColorHelper.getFoliageColorAtPos(worldIn, pos) : ColorizerFoliage.getFoliageColorBasic(),
+            BlocksTFC.getAllFruitLeafBlocks().toArray(new Block[0]));
     }
 
     @SubscribeEvent
@@ -176,6 +191,10 @@ public final class ClientRegisterEvents
 
         itemColors.registerItemColorHandler((stack, tintIndex) -> tintIndex == 1 ? EnumDyeColor.byDyeDamage(stack.getItemDamage()).getColorValue() : 0xFFFFFF,
                 ItemsTFC.CERAMICS_UNFIRED_VESSEL_GLAZED, ItemsTFC.CERAMICS_FIRED_VESSEL_GLAZED);
+
+        itemColors.registerItemColorHandler((stack, tintIndex) ->
+                event.getBlockColors().colorMultiplier(((ItemBlock) stack.getItem()).getBlock().getStateFromMeta(stack.getMetadata()), null, null, tintIndex),
+            BlocksTFC.getAllFruitLeafBlocks().stream().toArray(BlockFruitLeaves[]::new));
     }
 
     /**
