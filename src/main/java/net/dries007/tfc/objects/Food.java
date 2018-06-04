@@ -3,67 +3,67 @@ package net.dries007.tfc.objects;
 public enum Food
 {
     //mineral, carb, fat, protein, vitamin
-    BANANA(1, 1, 1, 1, 1, Category.NORMAL),
-    BLACKBERRY(1, 1, 1, 1, 1, Category.NORMAL),
-    BLUEBERRY(1, 1, 1, 1, 1, Category.NORMAL),
-    BUNCHBERRY(1, 1, 1, 1, 1, Category.NORMAL),
-    CHERRY(1, 1, 1, 1, 1, Category.NORMAL),
-    CLOUDBERRY(1, 1, 1, 1, 1, Category.NORMAL),
-    CRANBERRY(1, 1, 1, 1, 1, Category.NORMAL),
-    ELDERBERRY(1, 1, 1, 1, 1, Category.NORMAL),
-    GOOSEBERRY(1, 1, 1, 1, 1, Category.NORMAL),
-    GREEN_APPLE(1, 1, 1, 1, 1, Category.NORMAL),
-    LEMON(1, 1, 1, 1, 1, Category.NORMAL),
-    OLIVE(1, 1, 1, 1, 1, Category.NORMAL),
-    ORANGE(1, 1, 1, 1, 1, Category.NORMAL),
-    PEACH(1, 1, 1, 1, 1, Category.NORMAL),
-    PLUM(1, 1, 1, 1, 1, Category.NORMAL),
-    RASPBERRY(1, 1, 1, 1, 1, Category.NORMAL),
-    RED_APPLE(1, 1, 1, 1, 1, Category.NORMAL),
-    SNOWBERRY(1, 1, 1, 1, 1, Category.NORMAL),
-    STRAWBERRY(1, 1, 1, 1, 1, Category.NORMAL),
-    WINTERGREENBERRY(1, 1, 1, 1, 1, Category.NORMAL),
+    BANANA(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    BLACKBERRY(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    BLUEBERRY(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    BUNCHBERRY(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    CHERRY(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    CLOUDBERRY(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    CRANBERRY(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    ELDERBERRY(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    GOOSEBERRY(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    GREENAPPLE(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    LEMON(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    OLIVE(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    ORANGE(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    PEACH(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    PLUM(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    RASPBERRY(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    REDAPPLE(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    SNOWBERRY(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    STRAWBERRY(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    WINTERGREENBERRY(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
 
-    BARLEY_GRAIN(1, 1, 1, 1, 1, Category.NORMAL),
-    BARLEY_BREAD(1, 1, 1, 1, 1, Category.NORMAL),
-    MAIZE(1, 1, 1, 1, 1, Category.NORMAL),
-    CORN_BREAD(1, 1, 1, 1, 1, Category.NORMAL),
-    OAT_GRAIN(1, 1, 1, 1, 1, Category.NORMAL),
-    OAT_BREAD(1, 1, 1, 1, 1, Category.NORMAL),
-    RICE_GRAIN(1, 1, 1, 1, 1, Category.NORMAL),
-    RICE_BREAD(1, 1, 1, 1, 1, Category.NORMAL),
-    RYE_GRAIN(1, 1, 1, 1, 1, Category.NORMAL),
-    RYE_BREAD(1, 1, 1, 1, 1, Category.NORMAL),
-    WHEAT_GRAIN(1, 1, 1, 1, 1, Category.NORMAL),
-    WHEAT_BREAD(1, 1, 1, 1, 1, Category.NORMAL),
+    BARLEYGRAIN(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    BARLEYBREAD(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    MAIZE(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    CORNBREAD(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    OATGRAIN(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    OATBREAD(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    RICEGRAIN(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    RICEBREAD(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    RYEGRAIN(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    RYEBREAD(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    WHEATGRAIN(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    WHEATBREAD(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
 
-    CABBAGE(1, 1, 1, 1, 1, Category.NORMAL),
-    CARROT(1, 1, 1, 1, 1, Category.NORMAL),
-    GARLIC(1, 1, 1, 1, 1, Category.NORMAL),
-    GREENBEAN(1, 1, 1, 1, 1, Category.NORMAL),
-    GREEN_BELL_PEPPER(1, 1, 1, 1, 1, Category.NORMAL),
-    ONION(1, 1, 1, 1, 1, Category.NORMAL),
-    POTATO(1, 1, 1, 1, 1, Category.NORMAL),
-    RED_BELL_PEPPER(1, 1, 1, 1, 1, Category.NORMAL),
-    RUTABAGA(1, 1, 1, 1, 1, Category.NORMAL),
-    SEAWEED(1, 1, 1, 1, 1, Category.NORMAL),
-    SQUASH(1, 1, 1, 1, 1, Category.NORMAL),
-    TOMATO(1, 1, 1, 1, 1, Category.NORMAL),
-    YELLOW_BELL_PEPPER(1, 1, 1, 1, 1, Category.NORMAL),
+    BEET(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    CABBAGE(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    CARROT(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    GARLIC(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    GREENBEAN(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    GREENBELLPEPPER(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    ONION(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    POTATO(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    REDBELLPEPPER(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    SEAWEED(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    SQUASH(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    TOMATO(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    YELLOWBELLPEPPER(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
 
-    BEEF(1, 1, 1, 1, 1, Category.NORMAL),
-    CALAMARI(1, 1, 1, 1, 1, Category.NORMAL),
-    EGG(1, 1, 1, 1, 1, Category.NORMAL),
-    FISH(1, 1, 1, 1, 1, Category.NORMAL),
-    HORSE(1, 1, 1, 1, 1, Category.NORMAL),
-    MUTTON(1, 1, 1, 1, 1, Category.NORMAL),
-    PORK(1, 1, 1, 1, 1, Category.NORMAL),
-    POULTRY(1, 1, 1, 1, 1, Category.NORMAL),
-    VENISON(1, 1, 1, 1, 1, Category.NORMAL),
-    SOYBEAN(1, 1, 1, 1, 1, Category.NORMAL),
+    BEEF(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    CALAMARI(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    EGG(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    FISH(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    HORSEMEAT(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    MUTTON(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    PORKCHOP(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    POULTRY(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    VENISON(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    SOYBEAN(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
 
-    CHEESE(1, 1, 1, 1, 1, Category.NORMAL),
-    MILK(1, 1, 1, 1, 1, Category.NORMAL),
+    CHEESE(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
+    MILK(1, 1, 1, 1, 1, Category.NORMAL, 5, 0.5F),
     ;
 
     public final int mineral;
@@ -86,15 +86,20 @@ public enum Food
 
     public final Category category;
 
-    Food(int calcium, int carb, int fat, int protein, int vitamin, Food.Category category)
+    public final int heal;
+    public final float saturation;
+
+    Food(int calcium, int carb, int fat, int protein, int vitamin, Food.Category category, int heal, float saturation)
     {
-        // Nutrient values for each food item todo set nutrient values.
+        // Nutrient values for each food item todo set nutrient values. Heal and saturation are just temp until food system finished.
         this.carb = carb;
         this.fat = fat;
         this.protein = protein;
         this.vitamin = vitamin;
         this.mineral = calcium;
         this.category = category;
+        this.heal = heal;
+        this.saturation = saturation;
     }
 
     public enum Category {

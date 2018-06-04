@@ -189,6 +189,65 @@ CROP_TALL_TYPES = [
     'sugarcane',
     'tomato',
 ]
+FOOD_TYPES = [
+    'banana',
+    'blackberry',
+    'blueberry',
+    'bunchberry',
+    'cherry',
+    'cloudberry',
+    'cranberry',
+    'elderberry',
+    'gooseberry',
+    'greenapple',
+    'lemon',
+    'olive',
+    'orange',
+    'peach',
+    'plum',
+    'raspberry',
+    'redapple',
+    'snowberry',
+    'strawberry',
+    'wintergreenberry',
+    'barleygrain',
+    'barleybread',
+    'maize',
+    'cornbread',
+    'oatgrain',
+    'oatbread',
+    'ricegrain',
+    'ricebread',
+    'ryegrain',
+    'ryebread',
+    'wheatgrain',
+    'wheatbread',
+    'beet'
+    'cabbage',
+    'carrot',
+    'garlic',
+    'greenbean',
+    'greenbellpepper',
+    'onion',
+    'potato',
+    'redbellpepper',
+    'seaweed',
+    'squash',
+    'tomato',
+    'yellowbellpepper',
+    'beef',
+    'calamari',
+    'egg',
+    'fish',
+    'horsemeat',
+    'mutton',
+    'porkchop',
+    'poultry',
+    'venison',
+    'soybean',
+    'cheese',
+    'milk',
+]
 GEM_TYPES = [
     'agate',
     'amethyst',
@@ -757,8 +816,8 @@ for fruit_tree_type in FRUIT_TREE_TYPES:
 # CROP STUFF
 for crop_type in CROP_TYPES:
     # CROPS
-    blockstate(('crop', crop_type), 'crop', textures={
-        'crop': 'tfc:blocks/crops/%s_0' % crop_type
+    blockstate(('crops', crop_type), 'crop', textures={
+        'crops': 'tfc:blocks/crops/%s_0' % crop_type
     }, variants={
         ('stage=0'): {'model': 'crop', 'textures': {'crops': 'tfc:blocks/crops/%s_0' % crop_type}},
         ('stage=1'): {'model': 'crop', 'textures': {'crops': 'tfc:blocks/crops/%s_1' % crop_type}},
@@ -771,7 +830,7 @@ for crop_type in CROP_TYPES:
     })
 for crop_tall_type in CROP_TALL_TYPES:
     # CROPS
-    blockstate(('crop', crop_tall_type), 'tfc:crops_tall', textures={
+    blockstate(('crops', crop_tall_type), 'tfc:crops_tall', textures={
         'crops': 'tfc:blocks/crops/%s_0' % crop_tall_type
     }, variants={
         ('stage=0'): {'model': 'tfc:crops_tall', 'textures': {'crops': 'tfc:blocks/crops/%s_0' % crop_tall_type}},
@@ -899,5 +958,6 @@ for crop_type in CROP_TYPES:
 for crop_tall_type in CROP_TALL_TYPES:
     item(('crops', 'seedbag', crop_tall_type), 'tfc:items/crops/seedbag/%s' % crop_tall_type)
 
-
-
+# FOOD
+for food_type in FOOD_TYPES:
+    item(('food', food_type), 'tfc:items/food/%s' % food_type)
