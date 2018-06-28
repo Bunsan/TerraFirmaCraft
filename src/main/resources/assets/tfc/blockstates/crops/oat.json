@@ -4,7 +4,7 @@
   "defaults": {
     "model": "crop",
     "textures": {
-      "crops": "tfc:blocks/crops/oat_0"
+      "crop": "tfc:blocks/crops/oat_0"
     }
   },
   "variants": {
@@ -14,49 +14,49 @@
     "stage=0": {
       "model": "crop",
       "textures": {
-        "crops": "tfc:blocks/crops/oat_0"
+        "crop": "tfc:blocks/crops/oat_0"
       }
     },
     "stage=1": {
       "model": "crop",
       "textures": {
-        "crops": "tfc:blocks/crops/oat_1"
+        "crop": "tfc:blocks/crops/oat_1"
       }
     },
     "stage=2": {
       "model": "crop",
       "textures": {
-        "crops": "tfc:blocks/crops/oat_2"
+        "crop": "tfc:blocks/crops/oat_2"
       }
     },
     "stage=3": {
       "model": "crop",
       "textures": {
-        "crops": "tfc:blocks/crops/oat_3"
+        "crop": "tfc:blocks/crops/oat_3"
       }
     },
     "stage=4": {
       "model": "crop",
       "textures": {
-        "crops": "tfc:blocks/crops/oat_4"
+        "crop": "tfc:blocks/crops/oat_4"
       }
     },
     "stage=5": {
       "model": "crop",
       "textures": {
-        "crops": "tfc:blocks/crops/oat_5"
+        "crop": "tfc:blocks/crops/oat_5"
       }
     },
     "stage=6": {
       "model": "crop",
       "textures": {
-        "crops": "tfc:blocks/crops/oat_6"
+        "crop": "tfc:blocks/crops/oat_6"
       }
     },
     "stage=7": {
       "model": "crop",
       "textures": {
-        "crops": "tfc:blocks/crops/oat_7"
+        "crop": "tfc:blocks/crops/oat_7"
       }
     }
   }

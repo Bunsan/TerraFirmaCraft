@@ -174,10 +174,10 @@ public final class ItemsTFC
         }
 
         for (Agriculture.Crop seedbag : Agriculture.Crop.values())
-            simpleItems.add(register(r, "crops/seedbag/" + seedbag.name().toLowerCase(), (new ItemSeeds((BlockCropsTFC.get(seedbag)), Blocks.FARMLAND)), CT_PLANTS));
+            simpleItems.add(register(r, "crops/seedbag/" + seedbag.name().toLowerCase(), (new ItemSeedsTFC(seedbag, (BlockCropsTFC.get(seedbag)), Blocks.FARMLAND)), CT_PLANTS));
 
          for (Food food : Food.values())
-             simpleItems.add(register(r, "food/" + food.name().toLowerCase(), (new ItemFoodTFC(food.heal, food.saturation)), CT_FOOD ));
+             simpleItems.add(register(r, "food/" + food.name().toLowerCase(), (new ItemFoodTFC(food, food.heal, food.saturation)), CT_FOOD ));
 
 
         // FLAT
