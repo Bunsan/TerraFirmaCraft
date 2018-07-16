@@ -9,8 +9,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import net.minecraft.block.Block;
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.init.Blocks;
-import net.minecraft.item.*;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.event.RegistryEvent;
@@ -176,7 +175,7 @@ public final class ItemsTFC
         }
 
         for (Agriculture.Crop seedbag : Agriculture.Crop.values())
-            simpleItems.add(register(r, "crops/seedbag/" + seedbag.name().toLowerCase(), (new ItemSeedsTFC(seedbag, (BlockCropsTFC.get(seedbag)), Blocks.FARMLAND)), CT_PLANTS));
+            simpleItems.add(register(r, "crops/seedbag/" + seedbag.name().toLowerCase(), (new ItemSeedsTFC(seedbag, (BlockCropsTFC.get(seedbag)))), CT_PLANTS));
 
          for (Food food : Food.values())
              simpleItems.add(register(r, "food/" + food.name().toLowerCase(), (new ItemFoodTFC(food, food.heal, food.saturation)), CT_FOOD ));

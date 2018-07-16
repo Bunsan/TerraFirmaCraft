@@ -17,12 +17,12 @@ import net.minecraftforge.common.EnumPlantType;
 import net.minecraftforge.common.IPlantable;
 
 import net.dries007.tfc.objects.Agriculture.Crop;
+import net.dries007.tfc.objects.blocks.stone.BlockFarmlandTFC;
 
 public class ItemSeedsTFC extends Item implements IPlantable
 {
     private final Block crops;
     /** BlockID of the block the seeds can be planted on. */
-    private final Block soilBlockID;
     public final Crop seedbag;
 
     private static final EnumMap<Crop, ItemSeedsTFC> MAP = new EnumMap<>(Crop.class);
@@ -31,12 +31,11 @@ public class ItemSeedsTFC extends Item implements IPlantable
 
     public static ItemStack get(Crop seedbag, int amount) { return new ItemStack(MAP.get(seedbag), amount); }
 
-    public ItemSeedsTFC(Crop seedbag, Block crops, Block soil)
+    public ItemSeedsTFC(Crop seedbag, Block crops)
     {
         this.seedbag = seedbag;
         this.crops = crops;
         if (MAP.put(seedbag, this) != null) throw new IllegalStateException("There can only be one.");
-        this.soilBlockID = soil;
     }
     /**
      * Called when a Block is right-clicked with this Item
@@ -45,7 +44,7 @@ public class ItemSeedsTFC extends Item implements IPlantable
     {
         ItemStack itemstack = player.getHeldItem(hand);
         net.minecraft.block.state.IBlockState state = worldIn.getBlockState(pos);
-        if (facing == EnumFacing.UP && player.canPlayerEdit(pos.offset(facing), facing, itemstack) && state.getBlock().canSustainPlant(state, worldIn, pos, EnumFacing.UP, this) && worldIn.isAirBlock(pos.up()) && state.getBlock() == soilBlockID)
+        if (facing == EnumFacing.UP && player.canPlayerEdit(pos.offset(facing), facing, itemstack) && state.getBlock().canSustainPlant(state, worldIn, pos, EnumFacing.UP, this) && worldIn.isAirBlock(pos.up()) && state.getBlock() instanceof BlockFarmlandTFC)
         {
             worldIn.setBlockState(pos.up(), this.crops.getDefaultState());
 
