@@ -5,7 +5,8 @@
 
 package net.dries007.tfc.objects.items.metal;
 
-import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 import net.minecraft.creativetab.CreativeTabs;
@@ -13,10 +14,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.NonNullList;
 
 import mcp.MethodsReturnNonnullByDefault;
+import net.dries007.tfc.api.types.Ore;
+import net.dries007.tfc.api.util.Size;
+import net.dries007.tfc.api.util.Weight;
 import net.dries007.tfc.objects.Metal;
-import net.dries007.tfc.objects.Ore;
-import net.dries007.tfc.objects.Size;
-import net.dries007.tfc.objects.Weight;
 import net.dries007.tfc.objects.items.ItemTFC;
 import net.dries007.tfc.util.IMetalObject;
 import net.dries007.tfc.util.OreDictionaryHelper;
@@ -25,7 +26,7 @@ import net.dries007.tfc.util.OreDictionaryHelper;
 @ParametersAreNonnullByDefault
 public class ItemOreTFC extends ItemTFC implements IMetalObject
 {
-    private static final EnumMap<Ore, ItemOreTFC> MAP = new EnumMap<>(Ore.class);
+    private static final Map<Ore, ItemOreTFC> MAP = new HashMap<>();
 
     public static ItemOreTFC get(Ore ore)
     {
@@ -63,12 +64,12 @@ public class ItemOreTFC extends ItemTFC implements IMetalObject
         else // Mineral
         {
             OreDictionaryHelper.register(this, "gem", ore);
-            switch (ore)
+            switch (ore.name())
             {
-                case LAPIS_LAZULI:
+                case "lapis_lazuli":
                     OreDictionaryHelper.register(this, "gem", "lapis");
                     break;
-                case BITUMINOUS_COAL:
+                case "bituminous_coal":
                     OreDictionaryHelper.register(this, "gem", "coal");
                     break;
             }

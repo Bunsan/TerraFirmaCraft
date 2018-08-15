@@ -18,7 +18,15 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.registries.IForgeRegistry;
 
-import net.dries007.tfc.objects.*;
+import net.dries007.tfc.api.types.Ore;
+import net.dries007.tfc.api.types.Rock;
+import net.dries007.tfc.api.types.RockCategory;
+import net.dries007.tfc.api.types.Tree;
+import net.dries007.tfc.api.util.Size;
+import net.dries007.tfc.api.util.Weight;
+import net.dries007.tfc.objects.Gem;
+import net.dries007.tfc.objects.Metal;
+import net.dries007.tfc.objects.Powder;
 import net.dries007.tfc.objects.blocks.BlockSlabTFC;
 import net.dries007.tfc.objects.blocks.BlocksTFC;
 import net.dries007.tfc.objects.blocks.wood.BlockDoorTFC;
@@ -92,12 +100,12 @@ public final class ItemsTFC
         {
             Builder<ItemOreTFC> b = new Builder<>();
             for (Ore ore : Ore.values())
-                b.add(register(r, "ore/" + ore.name().toLowerCase(), new ItemOreTFC(ore), CT_ROCK_ITEMS));
+                b.add(register(r, "ore/" + ore.name(), new ItemOreTFC(ore), CT_ROCK_ITEMS));
             allOreItems = b.build();
 
             for (Ore ore : Ore.values())
                 if (ore.graded)
-                    simpleItems.add(register(r, "ore/small/" + ore.name().toLowerCase(), new ItemSmallOre(ore), CT_ROCK_ITEMS));
+                    simpleItems.add(register(r, "ore/small/" + ore.name(), new ItemSmallOre(ore), CT_ROCK_ITEMS));
         }
 
         {
@@ -128,10 +136,10 @@ public final class ItemsTFC
         for (BlockSlabTFC.Half slab : BlocksTFC.getAllSlabBlocks())
             simpleItems.add(register(r, slab.getRegistryName().getResourcePath(), new ItemSlabTFC(slab, slab, slab.doubleSlab), CT_DECORATIONS));
 
-        for (Wood wood : Wood.values())
-            simpleItems.add(register(r, "wood/lumber/" + wood.name().toLowerCase(), new ItemLumberTFC(wood), CT_WOOD));
+        for (Tree wood : Tree.values())
+            simpleItems.add(register(r, "wood/lumber/" + wood.name(), new ItemLumberTFC(wood), CT_WOOD));
 
-        for (Rock.Category cat : Rock.Category.values())
+        for (RockCategory cat : RockCategory.values())
         {
             simpleItems.add(register(r, "stone/axe/" + cat.name().toLowerCase(), new ItemRockAxe(cat), CT_ROCK_ITEMS));
             simpleItems.add(register(r, "stone/shovel/" + cat.name().toLowerCase(), new ItemRockShovel(cat), CT_ROCK_ITEMS));

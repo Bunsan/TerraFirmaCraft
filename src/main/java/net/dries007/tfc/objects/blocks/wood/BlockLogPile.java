@@ -1,7 +1,6 @@
 /*
  * Work under Copyright. Licensed under the EUPL.
  * See the project README.md and LICENSE.txt for more information.
- *
  */
 
 package net.dries007.tfc.objects.blocks.wood;
@@ -57,8 +56,6 @@ public class BlockLogPile extends Block implements ITileEntityProvider
         setTickRandomly(true);
         setHarvestLevel("axe", 0);
         this.setDefaultState(this.getDefaultState().withProperty(AXIS, false).withProperty(ONFIRE, false));
-
-        TileEntity.register(TELogPile.ID.toString(), TELogPile.class);
     }
 
     @Override
@@ -133,15 +130,17 @@ public class BlockLogPile extends Block implements ITileEntityProvider
             if (stack.getItem() == Items.FLINT_AND_STEEL && !state.getValue(ONFIRE) && side == EnumFacing.UP)
             {
                 // Light the Pile
-                if(world.getBlockState(pos.up()).getBlock().isReplaceable(world, pos)){
+                if (world.getBlockState(pos.up()).getBlock().isReplaceable(world, pos))
+                {
                     world.setBlockState(pos, state.withProperty(ONFIRE, true));
                     te.light();
                     world.setBlockState(pos.up(), Blocks.FIRE.getDefaultState());
-                    world.playSound(null,pos, SoundEvents.ITEM_FLINTANDSTEEL_USE, SoundCategory.PLAYERS,1.0F,1.0F);
+                    world.playSound(null, pos, SoundEvents.ITEM_FLINTANDSTEEL_USE, SoundCategory.PLAYERS, 1.0F, 1.0F);
                 }
             }
 
-            if (!player.isSneaking() && !state.getValue(ONFIRE)) {
+            if (!player.isSneaking() && !state.getValue(ONFIRE))
+            {
                 player.openGui(TerraFirmaCraft.getInstance(), TFCGuiHandler.LOG_PILE, world, pos.getX(), pos.getY(), pos.getZ());
             }
         }

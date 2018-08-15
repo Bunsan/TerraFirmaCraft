@@ -5,7 +5,11 @@
 
 package net.dries007.tfc.objects.blocks.stone;
 
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 import net.minecraft.block.*;
 import net.minecraft.block.state.IBlockState;
@@ -22,22 +26,41 @@ import net.minecraftforge.common.IPlantable;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-import net.dries007.tfc.objects.Rock;
+import mcp.MethodsReturnNonnullByDefault;
+import net.dries007.tfc.api.types.Rock;
 import net.dries007.tfc.objects.blocks.BlocksTFC;
 import net.dries007.tfc.objects.entity.EntityFallingBlockTFC;
 import net.dries007.tfc.objects.items.rock.ItemRock;
 import net.dries007.tfc.util.Helpers;
 import net.dries007.tfc.util.IFallingBlock;
-import net.dries007.tfc.util.InsertOnlyEnumTable;
 import net.dries007.tfc.util.OreDictionaryHelper;
 
+@MethodsReturnNonnullByDefault
+@ParametersAreNonnullByDefault
 public class BlockRockVariant extends Block implements IFallingBlock
 {
-    private static final InsertOnlyEnumTable<Rock, Rock.Type, BlockRockVariant> TABLE = new InsertOnlyEnumTable<>(Rock.class, Rock.Type.class);
+    private static final Map<Rock, EnumMap<Rock.Type, BlockRockVariant>> TABLE = new HashMap<>();
 
     public static BlockRockVariant get(Rock rock, Rock.Type type)
     {
-        return TABLE.get(rock, type);
+        return TABLE.get(rock).get(type);
+    }
+
+    public static BlockRockVariant create(Rock rock, Rock.Type type)
+    {
+        switch (type)
+        {
+            case FARMLAND:
+                return new BlockFarmlandTFC(type, rock);
+            case PATH:
+                return new BlockPathTFC(type, rock);
+            case GRASS:
+            case DRY_GRASS:
+            case CLAY_GRASS:
+                return new BlockRockVariantConnected(type, rock);
+            default:
+                return new BlockRockVariant(type, rock);
+        }
     }
 
     public final Rock.Type type;
@@ -46,7 +69,11 @@ public class BlockRockVariant extends Block implements IFallingBlock
     public BlockRockVariant(Rock.Type type, Rock rock)
     {
         super(type.material);
-        TABLE.put(rock, type, this);
+
+        if (!TABLE.containsKey(rock))
+            TABLE.put(rock, new EnumMap<>(Rock.Type.class));
+        TABLE.get(rock).put(type, this);
+
         this.type = type;
         this.rock = rock;
         if (type.isGrass) setTickRandomly(true);
@@ -95,13 +122,54 @@ public class BlockRockVariant extends Block implements IFallingBlock
 
     public BlockRockVariant getVariant(Rock.Type t)
     {
-        return TABLE.get(rock, t);
+        return TABLE.get(rock).get(t);
     }
 
     @Override
     public boolean shouldFall(IBlockState state, World world, BlockPos pos)
     {
         return type.isAffectedByGravity && IFallingBlock.super.shouldFall(state, world, pos);
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    @SuppressWarnings("deprecation")
+    public boolean shouldSideBeRendered(IBlockState blockState, IBlockAccess world, BlockPos pos, EnumFacing side)
+    {
+        switch (this.type)
+        {
+            case PATH:
+            case FARMLAND:
+                switch (side)
+                {
+                    case UP:
+                        return true;
+                    case NORTH:
+                    case SOUTH:
+                    case WEST:
+                    case EAST:
+                        IBlockState state = world.getBlockState(pos.offset(side));
+                        Block block = state.getBlock();
+                        if (state.isOpaqueCube()) return false;
+                        if (block instanceof BlockFarmland || block instanceof BlockGrassPath) return false;
+                        if (block instanceof BlockRockVariant)
+                        {
+                            switch (((BlockRockVariant) block).type)
+                            {
+                                case FARMLAND:
+                                case PATH:
+                                    return false;
+                                default:
+                                    return true;
+                            }
+                        }
+                        return true;
+                    case DOWN:
+                        return super.shouldSideBeRendered(blockState, world, pos, side);
+                }
+            default:
+                return super.shouldSideBeRendered(blockState, world, pos, side);
+        }
     }
 
     @Override
@@ -223,9 +291,9 @@ public class BlockRockVariant extends Block implements IFallingBlock
         switch (plantType)
         {
             case Plains:
-                return type == Rock.Type.DIRT || type == Rock.Type.GRASS; // todo: dry grass?
+                return type == Rock.Type.DIRT || type == Rock.Type.GRASS || type == Rock.Type.DRY_GRASS || type == Rock.Type.CLAY_GRASS;
             case Crop:
-                return type == Rock.Type.DIRT || type == Rock.Type.GRASS || type == Rock.Type.FARMLAND; // todo: dry grass? Should this even be true? Might be required for wild crops.
+                return type == Rock.Type.DIRT || type == Rock.Type.GRASS || type == Rock.Type.FARMLAND || type == Rock.Type.DRY_GRASS;
             case Desert:
                 return type == Rock.Type.SAND;
             case Cave:
@@ -235,55 +303,14 @@ public class BlockRockVariant extends Block implements IFallingBlock
             case Beach:
                 // todo: expand? I think a 2x2 radius is much better in a world where you can't move water sources.
                 return (type == Rock.Type.DIRT || type == Rock.Type.GRASS || type == Rock.Type.SAND || type == Rock.Type.DRY_GRASS) && // todo: dry grass?
-                        (BlocksTFC.isWater(world.getBlockState(pos.add(1, 0, 0))) ||
-                                BlocksTFC.isWater(world.getBlockState(pos.add(-1, 0, 0))) ||
-                                BlocksTFC.isWater(world.getBlockState(pos.add(0, 0, 1))) ||
-                                BlocksTFC.isWater(world.getBlockState(pos.add(0, 0, -1))));
+                    (BlocksTFC.isWater(world.getBlockState(pos.add(1, 0, 0))) ||
+                        BlocksTFC.isWater(world.getBlockState(pos.add(-1, 0, 0))) ||
+                        BlocksTFC.isWater(world.getBlockState(pos.add(0, 0, 1))) ||
+                        BlocksTFC.isWater(world.getBlockState(pos.add(0, 0, -1))));
             case Nether:
                 return false;
         }
 
         return false;
-    }
-
-    @Override
-    @SideOnly(Side.CLIENT)
-    @SuppressWarnings("deprecation")
-    public boolean shouldSideBeRendered(IBlockState blockState, IBlockAccess world, BlockPos pos, EnumFacing side)
-    {
-        switch (this.type)
-        {
-            case PATH:
-            case FARMLAND:
-                switch (side)
-                {
-                    case UP:
-                        return true;
-                    case NORTH:
-                    case SOUTH:
-                    case WEST:
-                    case EAST:
-                        IBlockState state = world.getBlockState(pos.offset(side));
-                        Block block = state.getBlock();
-                        if (state.isOpaqueCube()) return false;
-                        if (block instanceof BlockFarmland || block instanceof BlockGrassPath) return false;
-                        if (block instanceof BlockRockVariant)
-                        {
-                            switch (((BlockRockVariant) block).type)
-                            {
-                                case FARMLAND:
-                                case PATH:
-                                    return false;
-                                default:
-                                    return true;
-                            }
-                        }
-                        return true;
-                    case DOWN:
-                        return super.shouldSideBeRendered(blockState, world, pos, side);
-                }
-            default:
-                return super.shouldSideBeRendered(blockState, world, pos, side);
-        }
     }
 }
