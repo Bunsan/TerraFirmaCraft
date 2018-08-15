@@ -29,6 +29,7 @@ public final class CreativeTabsTFC
     public static final CreativeTabs CT_POTTERY = new CT("pottery", "tfc:mold/axe_head/bronze");
     public static final CreativeTabs CT_MISC = new CT("misc", "tfc:wand");
 
+
     public static void init()
     {
         Arrays.stream(CREATIVE_TAB_ARRAY).filter(CT.class::isInstance).map(CT.class::cast).forEach(CT::loadIconStack);
