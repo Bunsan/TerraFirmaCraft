@@ -55,6 +55,7 @@ public class ItemOreTFC extends ItemTFC implements IMetalObject
         {
             setHasSubtypes(true);
             OreDictionaryHelper.register(this, "ore");
+            //noinspection ConstantConditions
             OreDictionaryHelper.register(this, "ore", ore.getRegistryName().getPath());
             for (Ore.Grade grade : Ore.Grade.values())
             {
@@ -65,6 +66,7 @@ public class ItemOreTFC extends ItemTFC implements IMetalObject
         else // Mineral
         {
             OreDictionaryHelper.register(this, "gem", ore);
+            //noinspection ConstantConditions
             if (ore.getRegistryName().getPath().equals("lapis_lazuli"))
                 OreDictionaryHelper.register(this, "gem", "lapis");
             if (ore.getRegistryName().getPath().equals("bituminous_coal"))
@@ -116,12 +118,14 @@ public class ItemOreTFC extends ItemTFC implements IMetalObject
         return getGradeFromStack(stack).smeltAmount;
     }
 
+    @Nonnull
     @Override
     public Size getSize(@Nonnull ItemStack stack)
     {
         return Size.SMALL;
     }
 
+    @Nonnull
     @Override
     public Weight getWeight(@Nonnull ItemStack stack)
     {

@@ -5,9 +5,11 @@
 
 package net.dries007.tfc.objects.te;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -29,9 +31,8 @@ import net.dries007.tfc.objects.inventory.capability.ItemStackHandlerTE;
  * To provide side based automation, you must expose a IItemHandler wrapper based on the input side
  * Without overriding the getCapability methods, this will not accept items from external automation
  */
-@MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
-public abstract class TEInventory extends TileEntity
+public abstract class TEInventory extends TEBase
 {
     protected final ItemStackHandler inventory;
 
@@ -52,49 +53,24 @@ public abstract class TEInventory extends TileEntity
         return 64;
     }
 
-    public boolean isItemValid(int slot, ItemStack stack) { return true; }
-
-    @Override
-    public void readFromNBT(NBTTagCompound compound)
+    public boolean isItemValid(int slot, ItemStack stack)
     {
-        inventory.deserializeNBT(compound.getCompoundTag("inventory"));
-        super.readFromNBT(compound);
+        return true;
     }
 
     @Override
-    public NBTTagCompound writeToNBT(NBTTagCompound compound)
+    public void readFromNBT(NBTTagCompound nbt)
     {
-        compound.setTag("inventory", inventory.serializeNBT());
-        return super.writeToNBT(compound);
+        inventory.deserializeNBT(nbt.getCompoundTag("inventory"));
+        super.readFromNBT(nbt);
     }
 
     @Override
-    @Nullable
-    public SPacketUpdateTileEntity getUpdatePacket()
+    @Nonnull
+    public NBTTagCompound writeToNBT(NBTTagCompound nbt)
     {
-        NBTTagCompound updateTagDescribingTileEntityState = getUpdateTag();
-        return new SPacketUpdateTileEntity(this.pos, 1, updateTagDescribingTileEntityState);
-    }
-
-    @Override
-    public NBTTagCompound getUpdateTag()
-    {
-        NBTTagCompound nbtTagCompound = new NBTTagCompound();
-        writeToNBT(nbtTagCompound);
-        return nbtTagCompound;
-    }
-
-    @Override
-    public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt)
-    {
-        NBTTagCompound updateTagDescribingTileEntityState = pkt.getNbtCompound();
-        handleUpdateTag(updateTagDescribingTileEntityState);
-    }
-
-    @Override
-    public void handleUpdateTag(NBTTagCompound tag)
-    {
-        this.readFromNBT(tag);
+        nbt.setTag("inventory", inventory.serializeNBT());
+        return super.writeToNBT(nbt);
     }
 
     @Override

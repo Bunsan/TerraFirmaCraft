@@ -13,18 +13,26 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.template.TemplateManager;
+import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 
 import net.dries007.tfc.api.util.ITreeGenerator;
+import net.dries007.tfc.util.Helpers;
+
+import static net.dries007.tfc.api.util.TFCConstants.MOD_ID;
 
 public class Tree extends IForgeRegistryEntry.Impl<Tree>
 {
+    @GameRegistry.ObjectHolder(MOD_ID + ":sequoia")
+    public static final Tree SEQUOIA = Helpers.getNull();
+
     private final int maxGrowthRadius;
     private final float dominance;
     private final int maxHeight;
     private final int maxDecayDistance;
     private final boolean isConifer;
     private final boolean hasBushes;
+    private final boolean canMakeTannin;
     private final float minGrowthTime;
     private final float minTemp;
     private final float maxTemp;
@@ -66,7 +74,7 @@ public class Tree extends IForgeRegistryEntry.Impl<Tree>
      * @param burnTemp         the temperature at which this will burn in a fire pit or similar
      * @param burnTicks        the number of ticks that this will burn in a fire pit or similar
      */
-    public Tree(@Nonnull ResourceLocation name, @Nonnull ITreeGenerator gen, float minTemp, float maxTemp, float minRain, float maxRain, float minDensity, float maxDensity, float dominance, int maxGrowthRadius, int maxHeight, int maxDecayDistance, boolean isConifer, boolean hasBushes, float minGrowthTime, float burnTemp, int burnTicks)
+    public Tree(@Nonnull ResourceLocation name, @Nonnull ITreeGenerator gen, float minTemp, float maxTemp, float minRain, float maxRain, float minDensity, float maxDensity, float dominance, int maxGrowthRadius, int maxHeight, int maxDecayDistance, boolean isConifer, boolean hasBushes, boolean canMakeTannin, float minGrowthTime, float burnTemp, int burnTicks)
     {
         this.minTemp = minTemp;
         this.maxTemp = maxTemp;
@@ -81,6 +89,7 @@ public class Tree extends IForgeRegistryEntry.Impl<Tree>
         this.minDensity = minDensity;
         this.maxDensity = maxDensity;
         this.hasBushes = hasBushes;
+        this.canMakeTannin = canMakeTannin;
         this.burnTemp = burnTemp;
         this.burnTicks = burnTicks;
 
@@ -136,6 +145,11 @@ public class Tree extends IForgeRegistryEntry.Impl<Tree>
         return isConifer;
     }
 
+    public boolean canMakeTannin()
+    {
+        return canMakeTannin;
+    }
+
     public boolean hasBushes()
     {
         return hasBushes;
@@ -156,6 +170,7 @@ public class Tree extends IForgeRegistryEntry.Impl<Tree>
         return burnTicks;
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public String toString()
     {
@@ -176,6 +191,7 @@ public class Tree extends IForgeRegistryEntry.Impl<Tree>
         private int maxDecayDistance;
         private boolean isConifer;
         private boolean canMakeBushes;
+        private boolean canMakeTannin;
         private float minGrowthTime;
         private float burnTemp;
         private int burnTicks;
@@ -196,6 +212,7 @@ public class Tree extends IForgeRegistryEntry.Impl<Tree>
             this.maxDecayDistance = 4;
             this.isConifer = false;
             this.canMakeBushes = false;
+            this.canMakeTannin = false;
             this.minGrowthTime = 7;
             this.minDensity = 0.1f;
             this.maxDensity = 2f;
@@ -224,6 +241,12 @@ public class Tree extends IForgeRegistryEntry.Impl<Tree>
         public Builder setBushes()
         {
             canMakeBushes = true;
+            return this;
+        }
+
+        public Builder setTannin()
+        {
+            canMakeTannin = true;
             return this;
         }
 
@@ -261,7 +284,7 @@ public class Tree extends IForgeRegistryEntry.Impl<Tree>
 
         public Tree build()
         {
-            return new Tree(name, gen, minTemp, maxTemp, minRain, maxRain, minDensity, maxDensity, dominance, maxGrowthRadius, maxHeight, maxDecayDistance, isConifer, canMakeBushes, minGrowthTime, burnTemp, burnTicks);
+            return new Tree(name, gen, minTemp, maxTemp, minRain, maxRain, minDensity, maxDensity, dominance, maxGrowthRadius, maxHeight, maxDecayDistance, isConifer, canMakeBushes, canMakeTannin, minGrowthTime, burnTemp, burnTicks);
         }
     }
 }

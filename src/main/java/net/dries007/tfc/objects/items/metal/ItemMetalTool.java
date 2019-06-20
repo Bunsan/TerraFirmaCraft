@@ -30,10 +30,10 @@ import net.dries007.tfc.api.types.Metal;
 public class ItemMetalTool extends ItemMetal
 {
     public final ToolMaterial material;
-    private final float efficiency;
     private final double attackDamage;
     private final int areaOfAttack; // todo: implement
     private final float attackSpeed;
+    private float efficiency;
 
     public ItemMetalTool(Metal metal, Metal.ItemType type)
     {
@@ -42,6 +42,11 @@ public class ItemMetalTool extends ItemMetal
             throw new IllegalArgumentException("You can't make tools out of non tool metals.");
         material = metal.getToolMetal();
         int harvestLevel = material.getHarvestLevel();
+
+        setMaxStackSize(1);
+        setMaxDamage(material.getMaxUses());
+        efficiency = material.getEfficiency();
+
         float typeDamage;
         switch (type)
         {
@@ -86,6 +91,8 @@ public class ItemMetalTool extends ItemMetal
                 typeDamage = 1f;
                 areaOfAttack = 1;
                 attackSpeed = -3.5f;
+                setMaxDamage(material.getMaxUses() / 3);
+                efficiency = material.getEfficiency() * 0.5F;
                 break;
             case SCYTHE:
                 setHarvestLevel("scythe", harvestLevel);
@@ -124,9 +131,6 @@ public class ItemMetalTool extends ItemMetal
                 throw new IllegalArgumentException("Tool from non tool type.");
         }
 
-        setMaxStackSize(1);
-        setMaxDamage(material.getMaxUses());
-        efficiency = material.getEfficiency();
         attackDamage = typeDamage * material.getAttackDamage();
     }
 
@@ -134,37 +138,6 @@ public class ItemMetalTool extends ItemMetal
     public float getDestroySpeed(ItemStack stack, IBlockState state)
     {
         return canHarvestBlock(state, stack) ? efficiency : 1.0f;
-    }
-
-    @Override
-    public boolean canHarvestBlock(IBlockState state)
-    {
-        Material material = state.getMaterial();
-        switch (type)
-        {
-            case AXE:
-                return material == Material.WOOD || material == Material.PLANTS || material == Material.VINE;
-            case PICK:
-                return material == Material.IRON || material == Material.ANVIL || material == Material.ROCK;
-            case SHOVEL:
-                return material == Material.SNOW || material == Material.CRAFTED_SNOW;
-            case SCYTHE:
-                return material == Material.PLANTS || material == Material.VINE || material == Material.LEAVES;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean canHarvestBlock(IBlockState state, ItemStack stack)
-    {
-        for (String type : getToolClasses(stack))
-        {
-            if (state.getBlock().isToolEffective(type, state))
-            {
-                return true;
-            }
-        }
-        return canHarvestBlock(state);
     }
 
     @Override
@@ -208,6 +181,24 @@ public class ItemMetalTool extends ItemMetal
     }
 
     @Override
+    public boolean canHarvestBlock(IBlockState state)
+    {
+        Material material = state.getMaterial();
+        switch (type)
+        {
+            case AXE:
+                return material == Material.WOOD || material == Material.PLANTS || material == Material.VINE;
+            case PICK:
+                return material == Material.IRON || material == Material.ANVIL || material == Material.ROCK;
+            case SHOVEL:
+                return material == Material.SNOW || material == Material.CRAFTED_SNOW;
+            case SCYTHE:
+                return material == Material.PLANTS || material == Material.VINE || material == Material.LEAVES;
+        }
+        return false;
+    }
+
+    @Override
     @SideOnly(Side.CLIENT)
     public boolean isFull3D()
     {
@@ -233,15 +224,28 @@ public class ItemMetalTool extends ItemMetal
     }
 
     @Override
-    public boolean doesSneakBypassUse(ItemStack stack, IBlockAccess world, BlockPos pos, EntityPlayer player)
+    public boolean canHarvestBlock(IBlockState state, ItemStack stack)
     {
-        // Hammers need to activate anvils for welding
-        return this.type == Metal.ItemType.HAMMER || super.doesSneakBypassUse(stack, world, pos, player);
+        for (String type : getToolClasses(stack))
+        {
+            if (state.getBlock().isToolEffective(type, state))
+            {
+                return true;
+            }
+        }
+        return canHarvestBlock(state);
     }
 
     @Override
     public boolean canStack(ItemStack stack)
     {
         return false;
+    }
+
+    @Override
+    public boolean doesSneakBypassUse(ItemStack stack, IBlockAccess world, BlockPos pos, EntityPlayer player)
+    {
+        // Hammers need to activate anvils for welding
+        return this.type == Metal.ItemType.HAMMER || super.doesSneakBypassUse(stack, world, pos, player);
     }
 }

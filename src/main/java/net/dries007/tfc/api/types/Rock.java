@@ -12,11 +12,13 @@ import javax.annotation.Nonnull;
 import net.minecraft.block.material.Material;
 import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 
 import net.dries007.tfc.api.registries.TFCRegistries;
 import net.dries007.tfc.objects.blocks.stone.*;
 import net.dries007.tfc.objects.items.rock.*;
+import net.dries007.tfc.util.Helpers;
 
 import static net.dries007.tfc.api.types.Rock.FallingBlockType.*;
 import static net.dries007.tfc.api.util.TFCConstants.MOD_ID;
@@ -26,10 +28,14 @@ import static net.dries007.tfc.api.util.TFCConstants.MOD_ID;
  */
 public class Rock extends IForgeRegistryEntry.Impl<Rock>
 {
+    @GameRegistry.ObjectHolder("tfc:granite")
+    public static final Rock GRANITE = Helpers.getNull();
+
     private final RockCategory rockCategory;
     private final ResourceLocation textureLocation;
+    private final boolean isFluxStone;
 
-    public Rock(@Nonnull ResourceLocation name, @Nonnull RockCategory rockCategory)
+    public Rock(@Nonnull ResourceLocation name, @Nonnull RockCategory rockCategory, boolean isFluxStone)
     {
         //noinspection ConstantConditions
         if (rockCategory == null)
@@ -38,12 +44,13 @@ public class Rock extends IForgeRegistryEntry.Impl<Rock>
         setRegistryName(name);
         this.rockCategory = rockCategory;
         this.textureLocation = new ResourceLocation(MOD_ID, "textures/blocks/stonetypes/raw/" + name.getPath() + ".png");
+        this.isFluxStone = isFluxStone;
     }
 
-    public Rock(@Nonnull ResourceLocation name, @Nonnull ResourceLocation categoryName)
+    public Rock(@Nonnull ResourceLocation name, @Nonnull ResourceLocation categoryName, boolean isFluxStone)
     {
         //noinspection ConstantConditions
-        this(name, TFCRegistries.ROCK_CATEGORIES.getValue(categoryName));
+        this(name, TFCRegistries.ROCK_CATEGORIES.getValue(categoryName), isFluxStone);
     }
 
     /**
@@ -59,6 +66,11 @@ public class Rock extends IForgeRegistryEntry.Impl<Rock>
     public RockCategory getRockCategory()
     {
         return rockCategory;
+    }
+
+    public boolean isFluxStone()
+    {
+        return isFluxStone;
     }
 
     @SuppressWarnings("ConstantConditions")

@@ -5,33 +5,75 @@
 
 package net.dries007.tfc.types;
 
+import net.minecraft.init.Items;
+import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.registries.IForgeRegistry;
 
-import net.dries007.tfc.api.recipes.AnvilRecipe;
-import net.dries007.tfc.api.recipes.KnappingRecipe;
-import net.dries007.tfc.api.recipes.WeldingRecipe;
+import net.dries007.tfc.api.recipes.*;
 import net.dries007.tfc.api.registries.TFCRegistries;
 import net.dries007.tfc.api.types.Metal;
 import net.dries007.tfc.api.types.Rock;
+import net.dries007.tfc.objects.blocks.BlocksTFC;
+import net.dries007.tfc.objects.inventory.ingredient.IIngredient;
+import net.dries007.tfc.objects.items.ItemAnimalHide;
 import net.dries007.tfc.objects.items.ItemsTFC;
+import net.dries007.tfc.objects.items.ceramics.ItemMold;
 import net.dries007.tfc.objects.items.ceramics.ItemUnfiredMold;
 import net.dries007.tfc.objects.items.metal.ItemMetal;
 import net.dries007.tfc.objects.items.rock.ItemRockToolHead;
 import net.dries007.tfc.util.forge.ForgeRule;
+import net.dries007.tfc.world.classic.CalendarTFC;
 
 import static net.dries007.tfc.api.types.Metal.ItemType.*;
 import static net.dries007.tfc.api.util.TFCConstants.MOD_ID;
+import static net.dries007.tfc.objects.fluids.FluidsTFC.*;
 import static net.dries007.tfc.types.DefaultMetals.*;
 import static net.dries007.tfc.util.forge.ForgeRule.*;
 
 @Mod.EventBusSubscriber(modid = MOD_ID)
 public final class DefaultRecipes
 {
+    @SubscribeEvent
+    public static void onRegisterBarrelRecipeEvent(RegistryEvent.Register<BarrelRecipe> event)
+    {
+        event.getRegistry().registerAll(
+            // Hide Processing (all three conversions)
+            new BarrelRecipe(IIngredient.of(FRESH_WATER, 300), IIngredient.of(ItemAnimalHide.get(ItemAnimalHide.HideType.SCRAPED, ItemAnimalHide.HideSize.SMALL)), null, new ItemStack(ItemAnimalHide.get(ItemAnimalHide.HideType.PREPARED, ItemAnimalHide.HideSize.SMALL)), 8 * CalendarTFC.TICKS_IN_HOUR).setRegistryName(MOD_ID, "small_prepared_hide"),
+            new BarrelRecipe(IIngredient.of(FRESH_WATER, 400), IIngredient.of(ItemAnimalHide.get(ItemAnimalHide.HideType.SCRAPED, ItemAnimalHide.HideSize.MEDIUM)), null, new ItemStack(ItemAnimalHide.get(ItemAnimalHide.HideType.PREPARED, ItemAnimalHide.HideSize.MEDIUM)), 8 * CalendarTFC.TICKS_IN_HOUR).setRegistryName(MOD_ID, "medium_prepared_hide"),
+            new BarrelRecipe(IIngredient.of(FRESH_WATER, 500), IIngredient.of(ItemAnimalHide.get(ItemAnimalHide.HideType.SCRAPED, ItemAnimalHide.HideSize.LARGE)), null, new ItemStack(ItemAnimalHide.get(ItemAnimalHide.HideType.PREPARED, ItemAnimalHide.HideSize.LARGE)), 8 * CalendarTFC.TICKS_IN_HOUR).setRegistryName(MOD_ID, "large_prepared_hide"),
+            new BarrelRecipe(IIngredient.of(LIMEWATER, 300), IIngredient.of(ItemAnimalHide.get(ItemAnimalHide.HideType.RAW, ItemAnimalHide.HideSize.SMALL)), null, new ItemStack(ItemAnimalHide.get(ItemAnimalHide.HideType.SOAKED, ItemAnimalHide.HideSize.SMALL)), 8 * CalendarTFC.TICKS_IN_HOUR).setRegistryName(MOD_ID, "small_soaked_hide"),
+            new BarrelRecipe(IIngredient.of(LIMEWATER, 400), IIngredient.of(ItemAnimalHide.get(ItemAnimalHide.HideType.RAW, ItemAnimalHide.HideSize.MEDIUM)), null, new ItemStack(ItemAnimalHide.get(ItemAnimalHide.HideType.SOAKED, ItemAnimalHide.HideSize.MEDIUM)), 8 * CalendarTFC.TICKS_IN_HOUR).setRegistryName(MOD_ID, "medium_soaked_hide"),
+            new BarrelRecipe(IIngredient.of(LIMEWATER, 500), IIngredient.of(ItemAnimalHide.get(ItemAnimalHide.HideType.RAW, ItemAnimalHide.HideSize.LARGE)), null, new ItemStack(ItemAnimalHide.get(ItemAnimalHide.HideType.SOAKED, ItemAnimalHide.HideSize.LARGE)), 8 * CalendarTFC.TICKS_IN_HOUR).setRegistryName(MOD_ID, "large_soaked_hide"),
+            new BarrelRecipe(IIngredient.of(TANNIN, 300), IIngredient.of(ItemAnimalHide.get(ItemAnimalHide.HideType.PREPARED, ItemAnimalHide.HideSize.SMALL)), null, new ItemStack(Items.LEATHER), 8 * CalendarTFC.TICKS_IN_HOUR).setRegistryName("leather_small_hide"),
+            new BarrelRecipe(IIngredient.of(TANNIN, 400), IIngredient.of(ItemAnimalHide.get(ItemAnimalHide.HideType.PREPARED, ItemAnimalHide.HideSize.MEDIUM)), null, new ItemStack(Items.LEATHER, 2), 8 * CalendarTFC.TICKS_IN_HOUR).setRegistryName("leather_medium_hide"),
+            new BarrelRecipe(IIngredient.of(TANNIN, 500), IIngredient.of(ItemAnimalHide.get(ItemAnimalHide.HideType.PREPARED, ItemAnimalHide.HideSize.LARGE)), null, new ItemStack(Items.LEATHER, 3), 8 * CalendarTFC.TICKS_IN_HOUR).setRegistryName("leather_large_hide"),
+            // Misc
+            new BarrelRecipe(IIngredient.of(FRESH_WATER, 1000), IIngredient.of("logWoodTannin"), new FluidStack(TANNIN, 10000), ItemStack.EMPTY, 8 * CalendarTFC.TICKS_IN_HOUR).setRegistryName(MOD_ID, "tannin"),
+            // todo: enslave Claycorp for recipe magics
+            // todo: jute
+            // todo: sugar
+            // todo: all alcohol recipes
+            // todo: vinegar (many variants, use "fruit" ore dict and IIngredient.of(int, Fluid...)
+            // todo: brine + food? (may have to have a discussion about how we should handle "traits" on food.)
+            // todo: pickling (same as above)
+            // todo: mortar
+            // todo: curdled milk -> cheese (use an empty IIngredient for the item)
+            // todo: flavored cheese (figure out how to handle this?)
+
+            // Instant recipes: set the duration to 0
+            // todo: brine
+            // todo: limewater
+            new BarrelRecipe(IIngredient.of(FRESH_WATER, 500), IIngredient.of("dustFlux"), new FluidStack(LIMEWATER, 500), ItemStack.EMPTY, 0).setRegistryName(MOD_ID, "limewater")
+            // todo: curdled milk (make it a simpler calculation)
+        );
+    }
+
     @SubscribeEvent
     public static void onRegisterKnappingRecipeEvent(RegistryEvent.Register<KnappingRecipe> event)
     {
@@ -74,11 +116,51 @@ public final class DefaultRecipes
 
         /* LEATHER ITEMS */
 
-        // todo: leather recipes
+        event.getRegistry().registerAll(
+            new KnappingRecipe.Simple(KnappingRecipe.Type.LEATHER, true, new ItemStack(Items.LEATHER_HELMET), "XXXXX", "X   X", "X   X", "     ", "     ").setRegistryName(MOD_ID, "leather_helmet"),
+            new KnappingRecipe.Simple(KnappingRecipe.Type.LEATHER, true, new ItemStack(Items.LEATHER_CHESTPLATE), "X   X", "XXXXX", "XXXXX", "XXXXX", "XXXXX").setRegistryName(MOD_ID, "leather_chestplate"),
+            new KnappingRecipe.Simple(KnappingRecipe.Type.LEATHER, true, new ItemStack(Items.LEATHER_LEGGINGS), "XXXXX", "XXXXX", "XX XX", "XX XX", "XX XX").setRegistryName(MOD_ID, "leather_leggings"),
+            new KnappingRecipe.Simple(KnappingRecipe.Type.LEATHER, true, new ItemStack(Items.LEATHER_BOOTS), "XX   ", "XX   ", "XX   ", "XXXX ", "XXXXX").setRegistryName(MOD_ID, "leather_boots"),
+            new KnappingRecipe.Simple(KnappingRecipe.Type.LEATHER, true, new ItemStack(Items.SADDLE), "  X  ", "XXXXX", "XXXXX", "XXXXX", "  X  ").setRegistryName(MOD_ID, "leather_saddle")
+        );
 
         /* FIRE CLAY ITEMS */
 
-        // todo: fire clay recipes
+        event.getRegistry().registerAll(
+            new KnappingRecipe.Simple(KnappingRecipe.Type.FIRE_CLAY, true, new ItemStack(BlocksTFC.CRUCIBLE), "X   X", "X   X", "X   X", "X   X", "XXXXX").setRegistryName(MOD_ID, "fire_clay_crucible"),
+            new KnappingRecipe.Simple(KnappingRecipe.Type.FIRE_CLAY, true, new ItemStack(ItemsTFC.CERAMICS_UNFIRED_FIRE_BRICK, 2), "XX XX", "XX XX", "XX XX", "XX XX", "XX XX").setRegistryName(MOD_ID, "fire_clay_fire_brick")
+        );
+
+    }
+
+    @SubscribeEvent
+    public static void onRegisterPitKilnRecipeEvent(RegistryEvent.Register<PitKilnRecipe> event)
+    {
+        IForgeRegistry<PitKilnRecipe> r = event.getRegistry();
+
+        /* Pottery Items */
+
+        for (Metal.ItemType type : Metal.ItemType.values())
+        {
+            if (type.hasMold(null))
+            {
+                // Fired molds
+                r.register(new PitKilnRecipe(IIngredient.of(ItemMold.get(type))).setRegistryName(MOD_ID, "mold_" + type.name().toLowerCase() + "_fireable"));
+                // Unfired molds
+                r.register(new PitKilnRecipe(IIngredient.of(ItemUnfiredMold.get(type)), new ItemStack(ItemMold.get(type))).setRegistryName(MOD_ID, "mold_" + type.name().toLowerCase()));
+            }
+        }
+
+        // Fired ceramic vessels
+        r.register(new PitKilnRecipe(IIngredient.of(ItemsTFC.CERAMICS_FIRED_VESSEL)).setRegistryName(MOD_ID, "fired_vessel_fireable"));
+        r.register(new PitKilnRecipe(IIngredient.of(ItemsTFC.CERAMICS_FIRED_VESSEL_GLAZED)).setRegistryName(MOD_ID, "fired_vessel_fireable_glazed"));
+
+        // Unfired ceramic vessels
+        r.register(new PitKilnRecipe(IIngredient.of(ItemsTFC.CERAMICS_UNFIRED_VESSEL), new ItemStack(ItemsTFC.CERAMICS_FIRED_VESSEL)).setRegistryName("fired_vessel"));
+        for (EnumDyeColor color : EnumDyeColor.values())
+        {
+            r.register(new PitKilnRecipe(IIngredient.of(new ItemStack(ItemsTFC.CERAMICS_UNFIRED_VESSEL_GLAZED, color.getMetadata())), new ItemStack(ItemsTFC.CERAMICS_FIRED_VESSEL_GLAZED, color.getMetadata())).setRegistryName(MOD_ID, "fired_vessel_glazed_" + color.getName()));
+        }
     }
 
     @SubscribeEvent
@@ -109,7 +191,9 @@ public final class DefaultRecipes
         addAnvil(r, DOUBLE_SHEET, UNFINISHED_GREAVES, true, BEND_ANY, DRAW_ANY, HIT_ANY);
         addAnvil(r, DOUBLE_SHEET, UNFINISHED_BOOTS, true, BEND_LAST, BEND_SECOND_LAST, SHRINK_THIRD_LAST);
 
-        // todo: bloom -> iron ingot
+        r.register(new AnvilRecipeMeasurable(new ResourceLocation(MOD_ID, "refining_bloom"), IIngredient.of(ItemsTFC.UNREFINED_BLOOM), new ItemStack(ItemsTFC.REFINED_BLOOM), Metal.Tier.TIER_II, HIT_LAST, HIT_SECOND_LAST, HIT_THIRD_LAST));
+        r.register(new AnvilRecipeSplitting(new ResourceLocation(MOD_ID, "splitting_bloom"), IIngredient.of(ItemsTFC.REFINED_BLOOM), 100, Metal.Tier.TIER_II, PUNCH_LAST));
+        r.register(new AnvilRecipeMeasurable(new ResourceLocation(MOD_ID, "refine_bloom_ingot"), IIngredient.of(ItemsTFC.REFINED_BLOOM), new ItemStack(ItemMetal.get(Metal.WROUGHT_IRON, INGOT)), 100, Metal.Tier.TIER_II, HIT_LAST, HIT_SECOND_LAST, HIT_THIRD_LAST));
 
         // Steel Working
         addAnvil(r, PIG_IRON, HIGH_CARBON_STEEL);
@@ -158,7 +242,7 @@ public final class DefaultRecipes
             if (!input.isEmpty() && !output.isEmpty())
             {
                 //noinspection ConstantConditions
-                registry.register(new AnvilRecipe(new ResourceLocation(MOD_ID, (outputType.name() + "_" + metal.getRegistryName().getPath()).toLowerCase()), input, output, metal.getTier(), rules));
+                registry.register(new AnvilRecipe(new ResourceLocation(MOD_ID, (outputType.name() + "_" + metal.getRegistryName().getPath()).toLowerCase()), IIngredient.of(input), output, metal.getTier(), rules));
             }
         }
     }
@@ -175,7 +259,7 @@ public final class DefaultRecipes
             if (!input.isEmpty() && !output.isEmpty())
             {
                 //noinspection ConstantConditions
-                registry.register(new AnvilRecipe(new ResourceLocation(MOD_ID, ("ingot_" + outputMetal.getRegistryName().getPath()).toLowerCase()), input, output, outputMetal.getTier(), HIT_LAST, HIT_SECOND_LAST, HIT_THIRD_LAST));
+                registry.register(new AnvilRecipe(new ResourceLocation(MOD_ID, ("ingot_" + outputMetal.getRegistryName().getPath()).toLowerCase()), IIngredient.of(input), output, outputMetal.getTier(), HIT_LAST, HIT_SECOND_LAST, HIT_THIRD_LAST));
             }
         }
     }

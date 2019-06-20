@@ -5,29 +5,27 @@
 
 package net.dries007.tfc.world.classic.chunkdata;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import net.minecraft.nbt.*;
+import net.minecraft.nbt.NBTBase;
+import net.minecraft.nbt.NBTTagByteArray;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagIntArray;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.registries.ForgeRegistry;
 
 import net.dries007.tfc.api.registries.TFCRegistries;
-import net.dries007.tfc.api.types.Ore;
 import net.dries007.tfc.api.types.Rock;
 import net.dries007.tfc.api.types.Tree;
 import net.dries007.tfc.util.NBTBuilder;
-import net.dries007.tfc.util.OreSpawnData;
 import net.dries007.tfc.world.classic.DataLayer;
 
 import static net.dries007.tfc.world.classic.WorldTypeTFC.ROCKLAYER2;
@@ -60,23 +58,50 @@ public final class ChunkDataTFC
         return data == null ? EMPTY : data;
     }
 
-    public static Rock getRock1(World world, BlockPos pos) { return get(world, pos).getRockLayer1(pos.getX() & 15, pos.getZ() & 15); }
+    public static Rock getRock1(World world, BlockPos pos)
+    {
+        return get(world, pos).getRockLayer1(pos.getX() & 15, pos.getZ() & 15);
+    }
 
-    public static Rock getRock2(World world, BlockPos pos) { return get(world, pos).getRockLayer2(pos.getX() & 15, pos.getZ() & 15); }
+    public static Rock getRock2(World world, BlockPos pos)
+    {
+        return get(world, pos).getRockLayer2(pos.getX() & 15, pos.getZ() & 15);
+    }
 
-    public static Rock getRock3(World world, BlockPos pos) { return get(world, pos).getRockLayer3(pos.getX() & 15, pos.getZ() & 15); }
+    public static Rock getRock3(World world, BlockPos pos)
+    {
+        return get(world, pos).getRockLayer3(pos.getX() & 15, pos.getZ() & 15);
+    }
 
-    public static float getRainfall(World world, BlockPos pos) { return get(world, pos).getRainfall(); }
+    public static float getRainfall(World world, BlockPos pos)
+    {
+        return get(world, pos).getRainfall();
+    }
 
-    public static boolean isStable(World world, BlockPos pos) { return get(world, pos).getStabilityLayer(pos.getX() & 15, pos.getZ() & 15).valueInt == 0; }
+    public static boolean isStable(World world, BlockPos pos)
+    {
+        return get(world, pos).getStabilityLayer(pos.getX() & 15, pos.getZ() & 15).valueInt == 0;
+    }
 
-    public static int getDrainage(World world, BlockPos pos) { return get(world, pos).getDrainageLayer(pos.getX() & 15, pos.getZ() & 15).valueInt; }
+    public static int getDrainage(World world, BlockPos pos)
+    {
+        return get(world, pos).getDrainageLayer(pos.getX() & 15, pos.getZ() & 15).valueInt;
+    }
 
-    public static int getSeaLevelOffset(World world, BlockPos pos) { return get(world, pos).getSeaLevelOffset(pos.getX() & 15, pos.getZ() & 15); }
+    public static int getSeaLevelOffset(World world, BlockPos pos)
+    {
+        return get(world, pos).getSeaLevelOffset(pos.getX() & 15, pos.getZ() & 15);
+    }
 
-    public static int getFishPopulation(World world, BlockPos pos) { return get(world, pos).getFishPopulation(); }
+    public static int getFishPopulation(World world, BlockPos pos)
+    {
+        return get(world, pos).getFishPopulation();
+    }
 
-    public static Rock getRockHeight(World world, BlockPos pos) { return get(world, pos).getRockLayerHeight(pos.getX() & 15, pos.getY(), pos.getZ() & 15); }
+    public static Rock getRockHeight(World world, BlockPos pos)
+    {
+        return get(world, pos).getRockLayerHeight(pos.getX() & 15, pos.getY(), pos.getZ() & 15);
+    }
 
     private final int[] rockLayer1 = new int[256];
     private final int[] rockLayer2 = new int[256];
@@ -84,11 +109,8 @@ public final class ChunkDataTFC
     private final DataLayer[] drainageLayer = new DataLayer[256]; // To be removed / replaced?
     private final DataLayer[] stabilityLayer = new DataLayer[256]; // To be removed / replaced?
     private final int[] seaLevelOffset = new int[256];
-    private final List<ChunkDataOreSpawned> oresSpawned = new ArrayList<>();
-    private final List<ChunkDataOreSpawned> oresSpawnedView = Collections.unmodifiableList(oresSpawned);
     private boolean initialized = false;
     private int fishPopulation = FISH_POP_MAX; // todo: Set this based on biome? temp? rng?
-
     private float rainfall;
     private float baseTemp;
     private float avgTemp;
@@ -117,56 +139,100 @@ public final class ChunkDataTFC
         this.floraDiversity = floraDiversity;
     }
 
-    /**
-     * INTERNAL USE ONLY.
-     */
-    public void addSpawnedOre(Ore ore, OreSpawnData.SpawnSize size, Ore.Grade grade, BlockPos pos)
-    {
-        oresSpawned.add(new ChunkDataOreSpawned(ore, size, grade, pos));
-    }
-
     public boolean isInitialized()
     {
         return initialized;
     }
 
-    public Rock getRock1(BlockPos pos) { return getRock1(pos.getX() & 15, pos.getY() & 15); }
+    public Rock getRock1(BlockPos pos)
+    {
+        return getRock1(pos.getX() & 15, pos.getY() & 15);
+    }
 
-    public Rock getRock1(int x, int z) { return getRockLayer1(x, z); }
+    public Rock getRock1(int x, int z)
+    {
+        return getRockLayer1(x, z);
+    }
 
-    public Rock getRock2(BlockPos pos) { return getRock2(pos.getX() & 15, pos.getY() & 15); }
+    public Rock getRock2(BlockPos pos)
+    {
+        return getRock2(pos.getX() & 15, pos.getY() & 15);
+    }
 
-    public Rock getRock2(int x, int z) { return getRockLayer2(x, z); }
+    public Rock getRock2(int x, int z)
+    {
+        return getRockLayer2(x, z);
+    }
 
-    public Rock getRock3(BlockPos pos) { return getRock3(pos.getX() & 15, pos.getY() & 15); }
+    public Rock getRock3(BlockPos pos)
+    {
+        return getRock3(pos.getX() & 15, pos.getY() & 15);
+    }
 
-    public Rock getRock3(int x, int z) { return getRockLayer3(x, z); }
+    public Rock getRock3(int x, int z)
+    {
+        return getRockLayer3(x, z);
+    }
 
-    public boolean isStable(int x, int z) { return getStabilityLayer(x, z).valueInt == 0; }
+    public boolean isStable(int x, int z)
+    {
+        return getStabilityLayer(x, z).valueInt == 0;
+    }
 
-    public int getDrainage(int x, int z) { return getDrainageLayer(x, z).valueInt; }
+    public int getDrainage(int x, int z)
+    {
+        return getDrainageLayer(x, z).valueInt;
+    }
 
-    public Rock getRockHeight(BlockPos pos) { return getRockHeight(pos.getX(), pos.getY(), pos.getZ()); }
+    public Rock getRockHeight(BlockPos pos)
+    {
+        return getRockHeight(pos.getX(), pos.getY(), pos.getZ());
+    }
 
-    public Rock getRockHeight(int x, int y, int z) { return getRockLayerHeight(x & 15, y, z & 15); }
+    public Rock getRockHeight(int x, int y, int z)
+    {
+        return getRockLayerHeight(x & 15, y, z & 15);
+    }
 
-    public int getSeaLevelOffset(BlockPos pos) { return getSeaLevelOffset(pos.getX() & 15, pos.getY() & 15); }
+    public int getSeaLevelOffset(BlockPos pos)
+    {
+        return getSeaLevelOffset(pos.getX() & 15, pos.getY() & 15);
+    }
 
-    public int getSeaLevelOffset(int x, int z) { return seaLevelOffset[z << 4 | x]; }
+    public int getSeaLevelOffset(int x, int z)
+    {
+        return seaLevelOffset[z << 4 | x];
+    }
 
-    public int getFishPopulation() { return fishPopulation; }
+    public int getFishPopulation()
+    {
+        return fishPopulation;
+    }
 
-    public List<ChunkDataOreSpawned> getOresSpawned() { return oresSpawnedView; }
+    public float getRainfall()
+    {
+        return rainfall;
+    }
 
-    public float getRainfall() { return rainfall; }
+    public float getBaseTemp()
+    {
+        return baseTemp;
+    }
 
-    public float getBaseTemp() { return baseTemp; }
+    public float getAverageTemp()
+    {
+        return avgTemp;
+    }
 
-    public float getAverageTemp() { return avgTemp; }
+    public float getFloraDensity()
+    {
+        return floraDensity;
+    }
 
-    public float getFloraDensity() { return floraDensity; }
-
-    public float getFloraDiversity() { return floraDiversity; }
+    public float getFloraDiversity()
+    {
+        return floraDiversity;
+    }
 
     public List<Tree> getValidTrees()
     {
@@ -188,15 +254,30 @@ public final class ChunkDataTFC
     }
 
     // Directly accessing the DataLayer is discouraged (except for getting the name). It's easy to use the wrong value.
-    public Rock getRockLayer1(int x, int z) { return ((ForgeRegistry<Rock>) TFCRegistries.ROCKS).getValue(rockLayer1[z << 4 | x]); }
+    public Rock getRockLayer1(int x, int z)
+    {
+        return ((ForgeRegistry<Rock>) TFCRegistries.ROCKS).getValue(rockLayer1[z << 4 | x]);
+    }
 
-    public Rock getRockLayer2(int x, int z) { return ((ForgeRegistry<Rock>) TFCRegistries.ROCKS).getValue(rockLayer2[z << 4 | x]); }
+    public Rock getRockLayer2(int x, int z)
+    {
+        return ((ForgeRegistry<Rock>) TFCRegistries.ROCKS).getValue(rockLayer2[z << 4 | x]);
+    }
 
-    public Rock getRockLayer3(int x, int z) { return ((ForgeRegistry<Rock>) TFCRegistries.ROCKS).getValue(rockLayer3[z << 4 | x]); }
+    public Rock getRockLayer3(int x, int z)
+    {
+        return ((ForgeRegistry<Rock>) TFCRegistries.ROCKS).getValue(rockLayer3[z << 4 | x]);
+    }
 
-    public DataLayer getStabilityLayer(int x, int z) { return stabilityLayer[z << 4 | x]; }
+    public DataLayer getStabilityLayer(int x, int z)
+    {
+        return stabilityLayer[z << 4 | x];
+    }
 
-    public DataLayer getDrainageLayer(int x, int z) { return drainageLayer[z << 4 | x]; }
+    public DataLayer getDrainageLayer(int x, int z)
+    {
+        return drainageLayer[z << 4 | x];
+    }
 
     public Rock getRockLayerHeight(int x, int y, int z)
     {
@@ -248,10 +329,6 @@ public final class ChunkDataTFC
             root.setFloat("floraDensity", instance.floraDensity);
             root.setFloat("floraDiversity", instance.floraDiversity);
 
-            NBTTagList chunkDataOreSpawnedNBT = new NBTTagList();
-            instance.oresSpawned.stream().map(ChunkDataOreSpawned::serialize).forEach(chunkDataOreSpawnedNBT::appendTag);
-            root.setTag("oresSpawned", chunkDataOreSpawnedNBT);
-
             return root;
         }
 
@@ -276,9 +353,6 @@ public final class ChunkDataTFC
                 instance.avgTemp = root.getFloat("avgTemp");
                 instance.floraDensity = root.getFloat("floraDensity");
                 instance.floraDiversity = root.getFloat("floraDiversity");
-
-                instance.oresSpawned.clear();
-                root.getTagList("oresSpawned", Constants.NBT.TAG_COMPOUND).forEach(x -> instance.oresSpawned.add(new ChunkDataOreSpawned(((NBTTagCompound) x))));
 
                 instance.initialized = true;
             }

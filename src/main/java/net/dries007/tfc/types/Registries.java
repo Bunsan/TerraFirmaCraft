@@ -19,10 +19,7 @@ import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 import net.minecraftforge.registries.RegistryBuilder;
 
-import net.dries007.tfc.api.recipes.AlloyRecipe;
-import net.dries007.tfc.api.recipes.AnvilRecipe;
-import net.dries007.tfc.api.recipes.KnappingRecipe;
-import net.dries007.tfc.api.recipes.WeldingRecipe;
+import net.dries007.tfc.api.recipes.*;
 import net.dries007.tfc.api.registries.TFCRegistryEvent;
 import net.dries007.tfc.api.types.*;
 
@@ -38,6 +35,7 @@ public final class Registries
     public static void onNewRegistryEvent(RegistryEvent.NewRegistry event)
     {
         // Pre Block registries (dirty hack)
+
         newRegistry(ROCK_TYPE, RockCategory.class, true); // Required before: ROCK
         newRegistry(ROCK, Rock.class, true);
         newRegistry(METAL, Metal.class, true);// Required before: ORE, ALLOY_RECIPE, WELDING_RECIPE
@@ -50,6 +48,8 @@ public final class Registries
         newRegistry(KNAPPING_RECIPE, KnappingRecipe.class, false);
         newRegistry(ANVIL_RECIPE, AnvilRecipe.class, false);
         newRegistry(WELDING_RECIPE, WeldingRecipe.class, false);
+        newRegistry(PIT_KILN_RECIPE, PitKilnRecipe.class, false);
+        newRegistry(BARREL_RECIPE, BarrelRecipe.class, false);
     }
 
     /**

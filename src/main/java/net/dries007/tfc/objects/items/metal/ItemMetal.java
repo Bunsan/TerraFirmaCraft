@@ -11,10 +11,13 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.EnumRarity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 
 import net.dries007.tfc.api.capability.forge.ForgeableHandler;
@@ -34,8 +37,8 @@ public class ItemMetal extends ItemTFC implements IMetalObject
         return TABLE.get(metal).get(type);
     }
 
-    public final Metal metal;
-    public final Metal.ItemType type;
+    protected final Metal metal;
+    protected final Metal.ItemType type;
 
     public ItemMetal(Metal metal, Metal.ItemType type)
     {
@@ -50,6 +53,11 @@ public class ItemMetal extends ItemTFC implements IMetalObject
         OreDictionaryHelper.register(this, type);
         //noinspection ConstantConditions
         OreDictionaryHelper.register(this, type, metal.getRegistryName().getPath());
+
+        if (type == Metal.ItemType.TUYERE)
+        {
+            setMaxDamage(metal.getToolMetal() != null ? (int) (metal.getToolMetal().getMaxUses() * 0.2) : 100);
+        }
     }
 
     @Override
@@ -66,6 +74,7 @@ public class ItemMetal extends ItemTFC implements IMetalObject
         return d < 0 ? 0 : MathHelper.floor(type.getSmeltAmount() * d);
     }
 
+    @Nonnull
     @Override
     public Size getSize(@Nonnull ItemStack stack)
     {
@@ -108,6 +117,7 @@ public class ItemMetal extends ItemTFC implements IMetalObject
         }
     }
 
+    @Nonnull
     @Override
     public Weight getWeight(@Nonnull ItemStack stack)
     {
@@ -187,10 +197,21 @@ public class ItemMetal extends ItemTFC implements IMetalObject
         return super.getRarity(stack);
     }
 
+    @Override
+    public boolean doesSneakBypassUse(ItemStack stack, IBlockAccess world, BlockPos pos, EntityPlayer player)
+    {
+        return this.type == Metal.ItemType.KNIFE || super.doesSneakBypassUse(stack, world, pos, player);
+    }
+
     @Nullable
     @Override
     public ICapabilityProvider initCapabilities(ItemStack stack, @Nullable NBTTagCompound nbt)
     {
         return new ForgeableHandler(nbt, metal.getSpecificHeat(), metal.getMeltTemp());
+    }
+
+    public Metal.ItemType getType()
+    {
+        return type;
     }
 }

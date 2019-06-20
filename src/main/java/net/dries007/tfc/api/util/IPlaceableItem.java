@@ -56,7 +56,6 @@ public interface IPlaceableItem
         return 1;
     }
 
-
     class Impl
     {
         // Add to this map for things that fire when you right click a block
@@ -71,33 +70,26 @@ public interface IPlaceableItem
             placeableInstances.put(stack -> stack.getItem() == Items.COAL && stack.getMetadata() == 1, (world, pos, stack, player, facing, hitVec) ->
             {
                 if (facing == null) return false;
-
                 IBlockState state = world.getBlockState(pos);
-
-                if (facing == EnumFacing.UP && state.getBlock() == BlocksTFC.CHARCOAL_PILE)
+                if (state.getBlock() == BlocksTFC.CHARCOAL_PILE)
                 {
                     if (state.getValue(LAYERS) < 8)
                     {
                         world.setBlockState(pos, state.withProperty(LAYERS, state.getValue(LAYERS) + 1));
                         world.playSound(null, pos, SoundEvents.BLOCK_GRAVEL_PLACE, SoundCategory.BLOCKS, 1.0f, 0.5f);
-
                         return true;
                     }
                 }
-
-                if (world.getBlockState(pos.down().offset(facing)).isNormalCube() && world.getBlockState(pos.offset(facing)).getBlock().isReplaceable(world, pos.offset(facing)))
+                if (facing == EnumFacing.UP && world.getBlockState(pos).isNormalCube() && world.getBlockState(pos.up()).getBlock().isReplaceable(world, pos.up()))
                 {
                     // Create a new charcoal pile
                     if (!world.isRemote)
                     {
-                        world.setBlockState(pos.offset(facing), BlocksTFC.CHARCOAL_PILE.getDefaultState());
-
-                        world.playSound(null, pos.offset(facing), SoundEvents.BLOCK_GRAVEL_PLACE, SoundCategory.BLOCKS, 1.0f, 0.5f);
-
+                        world.setBlockState(pos.up(), BlocksTFC.CHARCOAL_PILE.getDefaultState());
+                        world.playSound(null, pos.up(), SoundEvents.BLOCK_GRAVEL_PLACE, SoundCategory.BLOCKS, 1.0f, 0.5f);
                         return true;
                     }
                 }
-
                 return false;
             });
 
@@ -169,21 +161,51 @@ public interface IPlaceableItem
             });
 
             // Clay -> Knapping
-            putBoth(stack -> stack.getItem() == Items.CLAY_BALL && stack.getCount() >= 5, (world, pos, stack, player, facing, hitVec) -> {
-                TFCGuiHandler.openGui(world, pos, player, TFCGuiHandler.Type.KNAPPING_CLAY);
-                return false;
+            putBoth(stack -> stack.getItem() == Items.CLAY_BALL && stack.getCount() >= 5, new IPlaceableItem()
+            {
+                @Override
+                public boolean placeItemInWorld(World world, BlockPos pos, ItemStack stack, EntityPlayer player, @Nullable EnumFacing facing, @Nullable Vec3d hitVec)
+                {
+                    if (!world.isRemote)
+                    {
+                        TFCGuiHandler.openGui(world, pos, player, TFCGuiHandler.Type.KNAPPING_CLAY);
+                    }
+                    return true;
+                }
+
+                @Override
+                public int consumeAmount()
+                {
+                    return 0;
+                }
+            });
+
+            // Leather -> Knapping
+            putBoth(stack -> OreDictionaryHelper.doesStackMatchOre(stack, "leather"), new IPlaceableItem()
+            {
+                @Override
+                public boolean placeItemInWorld(World world, BlockPos pos, ItemStack stack, EntityPlayer player, @Nullable EnumFacing facing, @Nullable Vec3d hitVec)
+                {
+                    if (Helpers.playerHasItemMatchingOre(player.inventory, "knife"))
+                    {
+                        if (!world.isRemote)
+                        {
+                            TFCGuiHandler.openGui(world, pos, player, TFCGuiHandler.Type.KNAPPING_LEATHER);
+                        }
+                        return true;
+                    }
+                    return false;
+                }
+
+                @Override
+                public int consumeAmount()
+                {
+                    return 0;
+                }
             });
         }
 
-        public static boolean isPlaceable(ItemStack stack)
-        {
-            if (stack.getItem() instanceof IPlaceableItem)
-            {
-                return true;
-            }
-            return placeableInstances.keySet().stream().anyMatch(x -> x.test(stack));
-        }
-
+        @Nullable
         public static IPlaceableItem getPlaceable(ItemStack stack)
         {
             if (stack.getItem() instanceof IPlaceableItem)
@@ -193,14 +215,10 @@ public interface IPlaceableItem
             return placeableInstances.entrySet().stream().filter(x -> x.getKey().test(stack)).map(Map.Entry::getValue).findFirst().orElse(null);
         }
 
-        public static boolean isUsable(ItemStack stack)
-        {
-            return usableInstances.keySet().stream().anyMatch(x -> x.test(stack));
-        }
-
+        @Nullable
         public static IPlaceableItem getUsable(ItemStack stack)
         {
-            return usableInstances.entrySet().stream().filter(x -> x.getKey().test(stack)).map(Map.Entry::getValue).findFirst().orElse(null);
+            return usableInstances.entrySet().stream().filter(x -> x.getKey().test(stack)).findFirst().map(Map.Entry::getValue).orElse(null);
         }
 
         private static void putBoth(Predicate<ItemStack> predicate, IPlaceableItem placeable)

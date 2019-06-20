@@ -12,8 +12,6 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ITickable;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler;
@@ -93,6 +91,7 @@ public class TEFirePit extends TEInventory implements ITickable, ITileFields
                 else
                 {
                     inventory.setStackInSlot(SLOT_FUEL_CONSUME, ItemStack.EMPTY);
+                    requiresSlotUpdate = true;
                     Fuel fuel = FuelManager.getFuel(stack);
                     burnTicks += fuel.getAmount();
                     burnTemperature = fuel.getTemperature();
@@ -249,19 +248,13 @@ public class TEFirePit extends TEInventory implements ITickable, ITileFields
         return 0;
     }
 
-    public void onAirIntake(float amount)
+    public void onAirIntake(int amount)
     {
-        airTicks += (int) (200 * amount);
+        airTicks += amount;
         if (airTicks > 600)
         {
             airTicks = 600;
         }
-    }
-
-    @Override
-    public boolean shouldRefresh(World world, BlockPos pos, IBlockState oldState, IBlockState newSate)
-    {
-        return oldState.getBlock() != newSate.getBlock();
     }
 
     private void cascadeFuelSlots()

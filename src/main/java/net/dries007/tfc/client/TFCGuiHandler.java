@@ -84,11 +84,19 @@ public class TFCGuiHandler implements IGuiHandler
             case KNAPPING_CLAY:
                 return new ContainerKnapping(KnappingRecipe.Type.CLAY, player.inventory, stack.getItem() == Items.CLAY_BALL ? stack : player.getHeldItemOffhand());
             case KNAPPING_LEATHER:
-                return new ContainerKnapping(KnappingRecipe.Type.LEATHER, player.inventory, stack.getItem() == ItemsTFC.LEATHER ? stack : player.getHeldItemOffhand());
+                return new ContainerKnapping(KnappingRecipe.Type.LEATHER, player.inventory, stack.getItem() == Items.LEATHER ? stack : player.getHeldItemOffhand());
             case KNAPPING_FIRE_CLAY:
                 return new ContainerKnapping(KnappingRecipe.Type.FIRE_CLAY, player.inventory, stack.getItem() == ItemsTFC.FIRE_CLAY ? stack : player.getHeldItemOffhand());
             case CRUCIBLE:
                 return new ContainerCrucible(player.inventory, Helpers.getTE(world, pos, TECrucible.class));
+            case CALENDAR:
+            case SKILLS:
+            case NUTRITION:
+                return new ContainerSimple(player.inventory);
+            case BLAST_FURNACE:
+                return new ContainerBlastFurnace(player.inventory, Helpers.getTE(world, pos, TEBlastFurnace.class));
+            case CRAFTING:
+                return new ContainerInventoryCrafting(player.inventory, player.world);
             default:
                 return null;
         }
@@ -114,7 +122,7 @@ public class TFCGuiHandler implements IGuiHandler
             case FIRE_PIT:
                 return new GuiFirePit(container, player.inventory, Helpers.getTE(world, pos, TEFirePit.class));
             case BARREL:
-                return new GuiBarrel(container, player.inventory, world.getBlockState(new BlockPos(x, y, z)).getBlock().getTranslationKey());
+                return new GuiBarrel(container, player.inventory, Helpers.getTE(world, pos, TEBarrel.class), world.getBlockState(new BlockPos(x, y, z)).getBlock().getTranslationKey());
             case CHARCOAL_FORGE:
                 return new GuiCharcoalForge(container, player.inventory, Helpers.getTE(world, pos, TECharcoalForge.class));
             case ANVIL:
@@ -135,6 +143,16 @@ public class TFCGuiHandler implements IGuiHandler
                 return new GuiKnapping(container, player, KnappingRecipe.Type.FIRE_CLAY, FIRE_CLAY_TEXTURE);
             case CRUCIBLE:
                 return new GuiCrucible(container, player.inventory, Helpers.getTE(world, pos, TECrucible.class));
+            case CALENDAR:
+                return new GuiCalendar(container, player.inventory);
+            case NUTRITION:
+                return new GuiNutrition(container, player.inventory);
+            case SKILLS:
+                return new GuiSkills(container, player.inventory);
+            case BLAST_FURNACE:
+                return new GuiBlastFurnace(container, player.inventory, Helpers.getTE(world, pos, TEBlastFurnace.class));
+            case CRAFTING:
+                return new GuiInventoryCrafting(container);
             default:
                 return null;
         }
@@ -156,12 +174,18 @@ public class TFCGuiHandler implements IGuiHandler
         ANVIL,
         ANVIL_PLAN,
         CRUCIBLE,
-        NULL;
+        BLAST_FURNACE,
+        CALENDAR,
+        NUTRITION,
+        SKILLS,
+        INVENTORY, // This is special, it is used by GuiButtonPlayerInventoryTab to signal to open the vanilla inventory
+        CRAFTING, // In-inventory 3x3 crafting grid
+        NULL; // This is special, it is a non-null null.
 
         private static Type[] values = values();
 
         @Nonnull
-        private static Type valueOf(int id)
+        public static Type valueOf(int id)
         {
             return id < 0 || id >= values.length ? NULL : values[id];
         }

@@ -28,12 +28,16 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 import mcp.MethodsReturnNonnullByDefault;
+import net.dries007.tfc.TerraFirmaCraft;
 import net.dries007.tfc.api.types.Rock;
 import net.dries007.tfc.objects.blocks.BlocksTFC;
+import net.dries007.tfc.objects.blocks.crops.BlockCropTFC;
 import net.dries007.tfc.objects.blocks.plants.BlockPlantTFC;
 import net.dries007.tfc.objects.items.rock.ItemRock;
 import net.dries007.tfc.util.Helpers;
 import net.dries007.tfc.util.OreDictionaryHelper;
+
+import static net.dries007.tfc.objects.blocks.crops.BlockCropTFC.WILD;
 
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
@@ -43,6 +47,12 @@ public class BlockRockVariant extends Block
 
     public static BlockRockVariant get(Rock rock, Rock.Type type)
     {
+        //noinspection ConstantConditions
+        if (rock == null)
+        {
+            TerraFirmaCraft.getLog().warn("Rock is null at BlockRockVariant#get! Serious problems, potential NPE! Please report this to developers!", new Exception("AHHHHHHHHHHHHHHHHHHHHHHHHH"));
+            return get(Rock.GRANITE, type);
+        }
         return TABLE.get(rock).get(type);
     }
 
@@ -71,8 +81,8 @@ public class BlockRockVariant extends Block
         }
     }
 
-    public final Rock.Type type;
-    public final Rock rock;
+    protected final Rock.Type type;
+    protected final Rock rock;
 
     public BlockRockVariant(Rock.Type type, Rock rock)
     {
@@ -191,7 +201,7 @@ public class BlockRockVariant extends Block
                 return ItemRock.get(rock);
             case CLAY:
             case CLAY_GRASS:
-                return Items.CLAY_BALL; // todo: own clay or event for clay making?
+                return Items.CLAY_BALL;
             default:
                 return super.getItemDropped(state, rand, fortune);
             case GRASS:
@@ -232,34 +242,66 @@ public class BlockRockVariant extends Block
     @Override
     public boolean canSustainPlant(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing direction, IPlantable plantable)
     {
+        int beachDistance = 2;
+
         if (plantable instanceof BlockPlantTFC)
         {
             switch (((BlockPlantTFC) plantable).getPlantTypeTFC())
             {
                 case CLAY:
                     return type == Rock.Type.DIRT || type == Rock.Type.GRASS || type == Rock.Type.DRY_GRASS || type == Rock.Type.CLAY || type == Rock.Type.CLAY_GRASS;
+                case DESERT_CLAY:
+                    return type == Rock.Type.SAND || type == Rock.Type.CLAY || type == Rock.Type.CLAY_GRASS;
                 case DRY_CLAY:
-                    return type == Rock.Type.DRY_GRASS || type == Rock.Type.SAND || type == Rock.Type.CLAY || type == Rock.Type.CLAY_GRASS;
+                    return type == Rock.Type.DIRT || type == Rock.Type.DRY_GRASS || type == Rock.Type.SAND || type == Rock.Type.CLAY || type == Rock.Type.CLAY_GRASS;
                 case DRY:
-                    return type == Rock.Type.DRY_GRASS || type == Rock.Type.SAND;
+                    return type == Rock.Type.DIRT || type == Rock.Type.DRY_GRASS || type == Rock.Type.SAND;
                 case FRESH_WATER:
                     return type == Rock.Type.DIRT || type == Rock.Type.GRASS || type == Rock.Type.DRY_GRASS || type == Rock.Type.GRAVEL;
                 case SALT_WATER:
                     return type == Rock.Type.DIRT || type == Rock.Type.GRASS || type == Rock.Type.DRY_GRASS || type == Rock.Type.SAND || type == Rock.Type.GRAVEL;
                 case FRESH_BEACH:
-                    // todo: expand? I think a 2x2 radius is much better in a world where you can't move water sources.
-                    return (type == Rock.Type.DIRT || type == Rock.Type.GRASS || type == Rock.Type.SAND || type == Rock.Type.DRY_GRASS) &&
-                        (BlocksTFC.isFreshWater(world.getBlockState(pos.add(1, 0, 0))) ||
-                            BlocksTFC.isFreshWater(world.getBlockState(pos.add(-1, 0, 0))) ||
-                            BlocksTFC.isFreshWater(world.getBlockState(pos.add(0, 0, 1))) ||
-                            BlocksTFC.isFreshWater(world.getBlockState(pos.add(0, 0, -1))));
+                {
+                    boolean flag = false;
+                    for (EnumFacing facing : EnumFacing.HORIZONTALS)
+                    {
+                        for (int i = 1; i <= beachDistance; i++)
+                            if (BlocksTFC.isFreshWater(world.getBlockState(pos.offset(facing, i))))
+                            {
+                                flag = true;
+                            }
+                    }
+                    return (type == Rock.Type.DIRT || type == Rock.Type.GRASS || type == Rock.Type.SAND || type == Rock.Type.DRY_GRASS) && flag;
+                }
                 case SALT_BEACH:
-                    // todo: expand? I think a 2x2 radius is much better in a world where you can't move water sources.
-                    return (type == Rock.Type.DIRT || type == Rock.Type.GRASS || type == Rock.Type.SAND || type == Rock.Type.DRY_GRASS) &&
-                        (BlocksTFC.isSaltWater(world.getBlockState(pos.add(1, 0, 0))) ||
-                            BlocksTFC.isSaltWater(world.getBlockState(pos.add(-1, 0, 0))) ||
-                            BlocksTFC.isSaltWater(world.getBlockState(pos.add(0, 0, 1))) ||
-                            BlocksTFC.isSaltWater(world.getBlockState(pos.add(0, 0, -1))));
+                {
+                    boolean flag = false;
+                    for (EnumFacing facing : EnumFacing.HORIZONTALS)
+                    {
+                        for (int i = 1; i <= beachDistance; i++)
+                            if (BlocksTFC.isSaltWater(world.getBlockState(pos.offset(facing, i))))
+                            {
+                                flag = true;
+                            }
+                    }
+                    return (type == Rock.Type.DIRT || type == Rock.Type.GRASS || type == Rock.Type.SAND || type == Rock.Type.DRY_GRASS) && flag;
+                }
+            }
+        }
+        else if (plantable instanceof BlockCropTFC)
+        {
+            IBlockState cropState = world.getBlockState(pos.up());
+            if (cropState.getBlock() instanceof BlockCropTFC)
+            {
+                boolean isWild = cropState.getValue(WILD);
+                if (isWild)
+                {
+                    if (type == Rock.Type.DIRT || type == Rock.Type.GRASS || type == Rock.Type.DRY_GRASS || type == Rock.Type.CLAY_GRASS)
+                    {
+                        return true;
+                    }
+                }
+                return type == Rock.Type.FARMLAND;
             }
         }
 
@@ -276,16 +318,32 @@ public class BlockRockVariant extends Block
             case Water:
                 return false;
             case Beach:
-                // todo: expand? I think a 2x2 radius is much better in a world where you can't move water sources.
-                return (type == Rock.Type.DIRT || type == Rock.Type.GRASS || type == Rock.Type.SAND || type == Rock.Type.DRY_GRASS) && // todo: dry grass?
-                    (BlocksTFC.isWater(world.getBlockState(pos.add(1, 0, 0))) ||
-                        BlocksTFC.isWater(world.getBlockState(pos.add(-1, 0, 0))) ||
-                        BlocksTFC.isWater(world.getBlockState(pos.add(0, 0, 1))) ||
-                        BlocksTFC.isWater(world.getBlockState(pos.add(0, 0, -1))));
+            {
+                boolean flag = false;
+                for (EnumFacing facing : EnumFacing.HORIZONTALS)
+                {
+                    for (int i = 1; i <= beachDistance; i++)
+                        if (BlocksTFC.isWater(world.getBlockState(pos.offset(facing, i))))
+                        {
+                            flag = true;
+                        }
+                }
+                return (type == Rock.Type.DIRT || type == Rock.Type.GRASS || type == Rock.Type.SAND || type == Rock.Type.DRY_GRASS) && flag;// todo: dry grass?
+            }
             case Nether:
                 return false;
         }
 
         return false;
+    }
+
+    public Rock.Type getType()
+    {
+        return type;
+    }
+
+    public Rock getRock()
+    {
+        return rock;
     }
 }

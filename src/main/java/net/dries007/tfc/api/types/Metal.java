@@ -24,8 +24,12 @@ import static net.dries007.tfc.api.util.TFCConstants.MOD_ID;
  */
 public class Metal extends IForgeRegistryEntry.Impl<Metal>
 {
-    @GameRegistry.ObjectHolder("tfc:unknown")
+    @GameRegistry.ObjectHolder(MOD_ID + ":unknown")
     public static final Metal UNKNOWN = Helpers.getNull();
+    @GameRegistry.ObjectHolder("tfc:wrought_iron")
+    public static final Metal WROUGHT_IRON = Helpers.getNull();
+    @GameRegistry.ObjectHolder("tfc:pig_iron")
+    public static final Metal PIG_IRON = Helpers.getNull();
 
     private final Tier tier;
     private final float specificHeat;
@@ -160,7 +164,7 @@ public class Metal extends IForgeRegistryEntry.Impl<Metal>
         SCRAP(false, 100),
         DUST(false, 100),
         NUGGET(false, 10),
-        SHEET(false, 200, ItemSheet::new),
+        SHEET(false, 200, ItemMetalSheet::new),
         DOUBLE_SHEET(false, 400),
         LAMP(false, 100, ItemLamp::new),
 
@@ -173,7 +177,7 @@ public class Metal extends IForgeRegistryEntry.Impl<Metal>
         SHOVEL_HEAD(true, 100, true, "X   X", "X   X", "X   X", "X   X", "XX XX"),
         AXE(true, 100, ItemMetalTool::new),
         AXE_HEAD(true, 100, true, "X XXX", "    X", "     ", "    X", "X XXX"),
-        HOE(true, 100, ItemMetalTool::new),
+        HOE(true, 100, ItemMetalHoe::new),
         HOE_HEAD(true, 100, true, "XXXXX", "     ", "  XXX", "XXXXX"),
         CHISEL(true, 100, ItemMetalTool::new),
         CHISEL_HEAD(true, 100, true, "X X", "X X", "X X", "X X", "X X"),
@@ -187,7 +191,7 @@ public class Metal extends IForgeRegistryEntry.Impl<Metal>
         JAVELIN_HEAD(true, 100, true, "XX   ", "X    ", "     ", "X   X", "XX XX"),
         HAMMER(true, 100, ItemMetalTool::new),
         HAMMER_HEAD(true, 100, true, "XXXXX", "     ", "     ", "XX XX", "XXXXX"),
-        PROPICK(true, 100, ItemMetalTool::new), // todo: special class + implementation
+        PROPICK(true, 100, ItemProspectorPick::new),
         PROPICK_HEAD(true, 100, true, "XXXXX", "    X", " XXX ", " XXXX", "XXXXX"),
         KNIFE(true, 100, ItemMetalTool::new),
         KNIFE_BLADE(true, 100, true, "XX X", "X  X", "X  X", "X  X", "X  X"),

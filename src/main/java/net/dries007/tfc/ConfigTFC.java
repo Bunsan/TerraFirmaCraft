@@ -51,10 +51,9 @@ public class ConfigTFC
         @Config.LangKey("config." + MOD_ID + ".general.debug")
         public boolean debug = Launch.blackboard.get("fml.deobfuscatedEnvironment") != null;
 
-        @Config.Comment("Lengths of a month in in game days. Year length is this x12")
-        @Config.LangKey("config." + MOD_ID + ".general.monthLength")
-        @Config.RangeInt(min = 1, max = 1000)
-        public int monthLength = 8;
+        @Config.Comment({"Enable/Disable the vanilla recipe removal spam. False = Those recipes are left in place."})
+        @Config.LangKey("config." + MOD_ID + ".general.removeVanillaRecipes")
+        public boolean removeVanillaRecipes = true;
 
         @Config.Comment("Normal decay leaf drop chance for sticks")
         @Config.RangeDouble(min = 0, max = 1)
@@ -82,17 +81,33 @@ public class ConfigTFC
 
         @Config.Comment("Number of ticks required for a pit kiln to burn out. (1000 = 1 in game hour = 50 seconds), default is 8 hours.")
         @Config.RangeInt(min = 20)
-        @Config.LangKey("config." + MOD_ID + ".general.temperatureModifierGlobal")
+        @Config.LangKey("config." + MOD_ID + ".general.pitKilnTime")
         public int pitKilnTime = 8000;
 
         @Config.Comment("Number of ticks required for a torch to burn out (72000 = 1 in game hour), default is 72 hours. Set to -1 to disable torch burnout.")
         @Config.RangeInt(min = 20)
-        public int torchTime = 200; // todo: change to 72000
+        @Config.LangKey("config." + MOD_ID + ".general.torchTime")
+        public int torchTime = 72000;
+
+        @Config.Comment("Number of ticks required for a bloomery to complete. (1000 = 1 in game hour = 50 seconds), default is 15 hours.")
+        @Config.RangeInt(min = 20)
+        @Config.LangKey("config." + MOD_ID + ".general.bloomeryTime")
+        public int bloomeryTime = 15000;
 
         @Config.Comment("Percentage chance that plants will grow each update. Smaller number = slower.")
         @Config.RangeDouble(min = 0d, max = 1d)
         @Config.LangKey("config." + MOD_ID + ".general.plantGrowthRate")
         public double plantGrowthRate = 0.01d;
+
+        @Config.Comment("Chance for the fire starter to be successful")
+        @Config.RangeDouble(min = 0d, max = 1d)
+        @Config.LangKey("config." + MOD_ID + ".general.fireStarterChance")
+        public double fireStarterChance = 0.5d;
+
+        @Config.Comment("Modifier for how quickly the players nutrition values will decay")
+        @Config.RangeDouble(min = 0, max = 10)
+        @Config.LangKey("config." + MOD_ID + ".general.playerNutritionDecayModifier")
+        public double playerNutritionDecayModifier = 0.2;
     }
 
     public static class ClientCFG
@@ -113,6 +128,10 @@ public class ConfigTFC
         @Config.Comment({"Show ItemStack NBT on the tooltip when advanced tooltips are enabled. (F3+H)"})
         @Config.LangKey("config." + MOD_ID + ".client.showNBTTooltip")
         public boolean showNBTTooltip = false;
+
+        @Config.Comment("Should the prospectors pick output to the actionbar? (the space just above the hotbar)")
+        @Config.LangKey("config." + MOD_ID + ".client.propickOutputToActionBar")
+        public boolean propickOutputToActionBar = true;
     }
 
     public static class WorldCFG

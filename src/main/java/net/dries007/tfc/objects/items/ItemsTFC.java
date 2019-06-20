@@ -28,6 +28,7 @@ import net.dries007.tfc.objects.blocks.BlocksTFC;
 import net.dries007.tfc.objects.blocks.wood.BlockDoorTFC;
 import net.dries007.tfc.objects.blocks.wood.BlockLogTFC;
 import net.dries007.tfc.objects.items.ceramics.*;
+import net.dries007.tfc.objects.items.food.ItemFoodTFC;
 import net.dries007.tfc.objects.items.itemblock.ItemBlockTFC;
 import net.dries007.tfc.objects.items.metal.ItemMetal;
 import net.dries007.tfc.objects.items.metal.ItemOreTFC;
@@ -37,6 +38,8 @@ import net.dries007.tfc.objects.items.rock.ItemRock;
 import net.dries007.tfc.objects.items.rock.ItemRockToolHead;
 import net.dries007.tfc.objects.items.wood.ItemDoorTFC;
 import net.dries007.tfc.objects.items.wood.ItemLumberTFC;
+import net.dries007.tfc.util.agriculture.Crop;
+import net.dries007.tfc.util.agriculture.Food;
 
 import static net.dries007.tfc.api.util.TFCConstants.MOD_ID;
 import static net.dries007.tfc.objects.CreativeTabsTFC.*;
@@ -49,8 +52,8 @@ public final class ItemsTFC
     public static final ItemDebug WAND = getNull();
     public static final ItemFireStarter FIRESTARTER = getNull();
     public static final ItemGoldPan GOLDPAN = getNull();
-    public static final ItemMisc HAY = getNull();
-    public static final ItemLeatherTFC LEATHER = getNull();
+    public static final ItemMisc STRAW = getNull();
+    public static final Item JUTE = getNull();
 
     @GameRegistry.ObjectHolder("ceramics/fire_clay")
     public static final ItemFireClay FIRE_CLAY = getNull();
@@ -70,6 +73,13 @@ public final class ItemsTFC
     public static final ItemUnfiredPottery CERAMICS_UNFIRED_POT = getNull();
     @GameRegistry.ObjectHolder("ceramics/unfired/bowl")
     public static final ItemUnfiredPottery CERAMICS_UNFIRED_BOWL = getNull();
+    @GameRegistry.ObjectHolder("ceramics/unfired/fire_brick")
+    public static final ItemUnfiredPottery CERAMICS_UNFIRED_FIRE_BRICK = getNull();
+
+    @GameRegistry.ObjectHolder("bloom/unrefined")
+    public static final ItemBloom UNREFINED_BLOOM = getNull();
+    @GameRegistry.ObjectHolder("bloom/refined")
+    public static final ItemBloom REFINED_BLOOM = getNull();
 
     private static ImmutableList<Item> allSimpleItems;
     private static ImmutableList<ItemOreTFC> allOreItems;
@@ -183,19 +193,50 @@ public final class ItemsTFC
             registerPottery(simpleItems, r, "ceramics/unfired/fire_brick", "ceramics/fired/fire_brick", new ItemUnfiredPottery(new ItemFiredPottery()));
 
             simpleItems.add(register(r, "ceramics/fire_clay", new ItemFireClay(), CT_MISC));
-            simpleItems.add(register(r, "ceramics/fire_brick", new ItemMisc(Size.NORMAL, Weight.MEDIUM), CT_MISC));
+
+        }
+
+        for (Crop crop : Crop.values())
+        {
+            simpleItems.add(register(r, "crop/seeds/" + crop.name().toLowerCase(), new ItemSeedsTFC(crop), CT_FOOD));
+        }
+
+        for (Food food : Food.values())
+        {
+            simpleItems.add(register(r, "food/" + food.name().toLowerCase(), new ItemFoodTFC(food), CT_FOOD));
         }
 
         // FLAT
         for (Rock rock : TFCRegistries.ROCKS.getValuesCollection())
+        {
             r.register(new ItemFlat(rock).setRegistryName(MOD_ID, "flat/" + rock.getRegistryName().getPath().toLowerCase()));
+        }
 
         simpleItems.add(register(r, "firestarter", new ItemFireStarter(), CT_MISC));
-        simpleItems.add(register(r, "hay", new ItemMisc(Size.SMALL, Weight.LIGHT, "kindling"), CT_MISC));
+        simpleItems.add(register(r, "straw", new ItemMisc(Size.SMALL, Weight.LIGHT, "kindling", "straw"), CT_MISC));
+
+        simpleItems.add(register(r, "bloom/unrefined", new ItemBloom(), CT_MISC));
+        simpleItems.add(register(r, "bloom/refined", new ItemBloom(), CT_MISC));
+
+        // Animal Hides
+        simpleItems.add(register(r, "hide/sheepskin", new ItemMisc(Size.VERY_SMALL, Weight.LIGHT), CT_MISC));
+        for (ItemAnimalHide.HideSize size : ItemAnimalHide.HideSize.values())
+        {
+            for (ItemAnimalHide.HideType type : ItemAnimalHide.HideType.values())
+            {
+                if (type == ItemAnimalHide.HideType.SOAKED)
+                {
+                    simpleItems.add(register(r, ("hide/" + type.name() + "/" + size.name()).toLowerCase(), new ItemAnimalHide.Soaked(type, size), CT_MISC));
+                }
+                else
+                {
+                    simpleItems.add(register(r, ("hide/" + type.name() + "/" + size.name()).toLowerCase(), new ItemAnimalHide(type, size), CT_MISC));
+                }
+            }
+        }
         register(r, "goldpan", new ItemGoldPan(), CT_MISC);
 
-        simpleItems.add(register(r, "leather", new ItemLeatherTFC(), CT_MISC));
-
+        // Note: if you add items you don't need to put them in this list of todos. Feel free to add them where they make sense :)
         // todo: Bow? Arrows?
         // todo: Fishing rod?
         // todo: (white) dye? (so white dye isn't bonemeal)
@@ -216,7 +257,6 @@ public final class ItemsTFC
         // todo: straw
         // todo: fire clay & fire brick & fire bricks (block)
 
-        // todo: bloom & raw bloom ( = IMetalObject)
         // todo: jute & jute fiber
         // todo: quiver
         // todo: millstone (quern)

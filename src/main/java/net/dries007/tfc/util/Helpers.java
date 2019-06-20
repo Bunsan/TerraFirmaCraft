@@ -21,11 +21,16 @@ import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 
+import io.netty.buffer.ByteBuf;
+import net.dries007.tfc.Constants;
 import net.dries007.tfc.api.registries.TFCRegistries;
 import net.dries007.tfc.api.types.Plant;
 import net.dries007.tfc.api.types.Rock;
@@ -52,7 +57,7 @@ public final class Helpers
             else if (us.getBlock() instanceof BlockRockVariant)
             {
                 BlockRockVariant block = ((BlockRockVariant) us.getBlock());
-                world.setBlockState(pos, block.getVariant(block.type.getNonGrassVersion()).getDefaultState());
+                world.setBlockState(pos, block.getVariant(block.getType().getNonGrassVersion()).getDefaultState());
             }
         }
         else
@@ -77,23 +82,23 @@ public final class Helpers
                 else if (current.getBlock() instanceof BlockRockVariant)
                 {
                     Rock.Type spreader = Rock.Type.GRASS;
-                    if ((us.getBlock() instanceof BlockRockVariant) && ((BlockRockVariant) us.getBlock()).type == Rock.Type.DRY_GRASS)
+                    if ((us.getBlock() instanceof BlockRockVariant) && ((BlockRockVariant) us.getBlock()).getType() == Rock.Type.DRY_GRASS)
                         spreader = Rock.Type.DRY_GRASS;
 
                     BlockRockVariant block = ((BlockRockVariant) current.getBlock());
-                    world.setBlockState(target, block.getVariant(block.type.getGrassVersion(spreader)).getDefaultState());
+                    world.setBlockState(target, block.getVariant(block.getType().getGrassVersion(spreader)).getDefaultState());
                 }
             }
 
             for (Plant plant : TFCRegistries.PLANTS.getValuesCollection())
             {
-                if (plant.getPlantType() == Plant.PlantType.SHORT_GRASS && rand.nextFloat() < 0.01f)
+                if (plant.getPlantType() == Plant.PlantType.SHORT_GRASS && rand.nextFloat() < 0.5f)
                 {
-                    float temp = ClimateTFC.getHeightAdjustedBiomeTemp(world, pos.up());
+                    float temp = ClimateTFC.getHeightAdjustedTemp(world, pos.up());
                     BlockShortGrassTFC plantBlock = BlockShortGrassTFC.get(plant);
 
                     if (world.isAirBlock(pos.up()) &&
-                        plant.isValidLocation(temp, ChunkDataTFC.getRainfall(world, pos.up()), world.getLightFromNeighbors(pos.up())) &&
+                        plant.isValidLocation(temp, ChunkDataTFC.getRainfall(world, pos.up()), Math.subtractExact(world.getLightFor(EnumSkyBlock.SKY, pos.up()), world.getSkylightSubtracted())) &&
                         plant.isValidGrowthTemp(temp) &&
                         rand.nextDouble() < plantBlock.getGrowthRate(world, pos.up()))
                     {
@@ -172,6 +177,25 @@ public final class Helpers
         return player.isCreative() ? stack : consumeItem(stack, amount);
     }
 
+    public static void damageItem(ItemStack stack)
+    {
+        damageItem(stack, 1);
+    }
+
+    /**
+     * Utility method for damaging an item that doesn't take an entity
+     *
+     * @param stack the stack to be damaged
+     */
+    public static void damageItem(ItemStack stack, int amount)
+    {
+        if (stack.attemptDamageItem(amount, Constants.RNG, null))
+        {
+            stack.shrink(1);
+            stack.setItemDamage(0);
+        }
+    }
+
     /**
      * Simple method to spawn items in the world at a precise location, rather than using InventoryHelper
      */
@@ -222,6 +246,26 @@ public final class Helpers
             {
                 return side;
             }
+        }
+        return null;
+    }
+
+    public static void writeResourceLocation(ByteBuf buf, @Nullable ResourceLocation loc)
+    {
+        buf.writeBoolean(loc != null);
+        if (loc != null)
+        {
+            ByteBufUtils.writeUTF8String(buf, loc.toString());
+        }
+    }
+
+
+    @Nullable
+    public static ResourceLocation readResourceLocation(ByteBuf buf)
+    {
+        if (buf.readBoolean())
+        {
+            return new ResourceLocation(ByteBufUtils.readUTF8String(buf));
         }
         return null;
     }

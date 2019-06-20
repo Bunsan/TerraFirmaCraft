@@ -16,15 +16,13 @@ import net.minecraftforge.fml.relauncher.Side;
 
 import net.dries007.tfc.api.capability.forge.CapabilityForgeable;
 import net.dries007.tfc.api.capability.heat.CapabilityItemHeat;
+import net.dries007.tfc.api.capability.nutrient.CapabilityFood;
 import net.dries007.tfc.api.capability.size.CapabilityItemSize;
 import net.dries007.tfc.api.util.TFCConstants;
 import net.dries007.tfc.client.ClientEvents;
 import net.dries007.tfc.client.TFCGuiHandler;
 import net.dries007.tfc.client.TFCKeybindings;
-import net.dries007.tfc.cmd.CommandGenTree;
-import net.dries007.tfc.cmd.CommandHeat;
-import net.dries007.tfc.cmd.CommandStripWorld;
-import net.dries007.tfc.cmd.CommandTimeTFC;
+import net.dries007.tfc.command.*;
 import net.dries007.tfc.network.*;
 import net.dries007.tfc.objects.entity.EntitiesTFC;
 import net.dries007.tfc.objects.items.ItemsTFC;
@@ -32,23 +30,23 @@ import net.dries007.tfc.objects.recipes.heat.HeatRecipeManager;
 import net.dries007.tfc.proxy.IProxy;
 import net.dries007.tfc.util.FuelManager;
 import net.dries007.tfc.util.OreDictionaryHelper;
-import net.dries007.tfc.util.OreSpawnData;
 import net.dries007.tfc.world.classic.CalendarTFC;
 import net.dries007.tfc.world.classic.WorldTypeTFC;
 import net.dries007.tfc.world.classic.chunkdata.CapabilityChunkData;
 import net.dries007.tfc.world.classic.worldgen.*;
+import net.dries007.tfc.world.classic.worldgen.vein.VeinRegistry;
 
 import static net.dries007.tfc.api.util.TFCConstants.MOD_ID;
 
 @SuppressWarnings("DefaultAnnotationParam")
 @Mod(modid = MOD_ID, name = TFCConstants.MOD_NAME, useMetadata = true, guiFactory = Constants.GUI_FACTORY, canBeDeactivated = false, certificateFingerprint = TFCConstants.SIGNING_KEY)
-@Mod.EventBusSubscriber()
+@Mod.EventBusSubscriber
 public final class TerraFirmaCraft
 {
-    @Mod.Instance()
+    @Mod.Instance
     private static TerraFirmaCraft instance = null;
 
-    @Mod.Metadata()
+    @Mod.Metadata
     private static ModMetadata metadata = null;
 
     @SidedProxy(modId = MOD_ID, clientSide = "net.dries007.tfc.proxy.ClientProxy", serverSide = "net.dries007.tfc.proxy.ServerProxy")
@@ -110,7 +108,9 @@ public final class TerraFirmaCraft
         log = event.getModLog();
         log.debug("If you can see this, debug logging is working :)");
         if (!isSignedBuild)
+        {
             log.warn("You are not running an official build. Please do not use this and then report bugs or issues.");
+        }
 
         // No need to sync config here, forge magic
 
@@ -119,30 +119,41 @@ public final class TerraFirmaCraft
         int id = 0;
         // Received on server
         network.registerMessage(new PacketGuiButton.Handler(), PacketGuiButton.class, ++id, Side.SERVER);
+        network.registerMessage(new PacketPlaceBlockSpecial.Handler(), PacketPlaceBlockSpecial.class, ++id, Side.SERVER);
+        network.registerMessage(new PacketSwitchPlayerInventoryTab.Handler(), PacketSwitchPlayerInventoryTab.class, ++id, Side.SERVER);
+        network.registerMessage(new PacketOpenCraftingGui.Handler(), PacketOpenCraftingGui.class, ++id, Side.SERVER);
         // Received on client
         network.registerMessage(new PacketAnvilUpdate.Handler(), PacketAnvilUpdate.class, ++id, Side.CLIENT);
         network.registerMessage(new PacketCrucibleUpdate.Handler(), PacketCrucibleUpdate.class, ++id, Side.CLIENT);
         network.registerMessage(new PacketChunkData.Handler(), PacketChunkData.class, ++id, Side.CLIENT);
         network.registerMessage(new PacketCapabilityContainerUpdate.Handler(), PacketCapabilityContainerUpdate.class, ++id, Side.CLIENT);
         network.registerMessage(new PacketCalendarUpdate.Handler(), PacketCalendarUpdate.class, ++id, Side.CLIENT);
+        network.registerMessage(new PacketBarrelUpdate.Handler(), PacketBarrelUpdate.class, ++id, Side.CLIENT);
+        network.registerMessage(new PacketPlayerNutrientsUpdate.Handler(), PacketPlayerNutrientsUpdate.class, ++id, Side.CLIENT);
 
         EntitiesTFC.preInit();
         CalendarTFC.preInit();
-        OreSpawnData.preInit(event.getModConfigurationDirectory());
+        VeinRegistry.INSTANCE.preInit(event.getModConfigurationDirectory());
 
         CapabilityChunkData.preInit();
         CapabilityItemSize.preInit();
         CapabilityItemHeat.preInit();
         CapabilityForgeable.preInit();
+        CapabilityFood.preInit();
 
-        if (event.getSide().isClient()) ClientEvents.preInit();
+        if (event.getSide().isClient())
+        {
+            ClientEvents.preInit();
+        }
     }
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event)
     {
         if (!isSignedBuild)
+        {
             log.warn("You are not running an official build. Please do not use this and then report bugs or issues.");
+        }
 
         OreDictionaryHelper.init();
         ItemsTFC.init();
@@ -156,38 +167,45 @@ public final class TerraFirmaCraft
 
         GameRegistry.registerWorldGenerator(new RarityBasedWorldGen(x -> x.lavaFissureRarity, new WorldGenFissure(true, 20)), 0);
         GameRegistry.registerWorldGenerator(new RarityBasedWorldGen(x -> x.waterFissureRarity, new WorldGenFissure(false, -1)), 0);
-        GameRegistry.registerWorldGenerator(new RarityBasedWorldGen(x -> x.lavaFissureClusterRarity, new WorldGenSurfaceFissureCluster(true)), 1);
-        GameRegistry.registerWorldGenerator(new RarityBasedWorldGen(x -> x.waterFissureClusterRarity, new WorldGenSurfaceFissureCluster(false)), 1);
-        GameRegistry.registerWorldGenerator(new WorldGenOre(), 2);
+        // todo: fix these. They are commented out due to significant cascading lag problems. They need to be rewritten
+        //GameRegistry.registerWorldGenerator(new RarityBasedWorldGen(x -> x.lavaFissureClusterRarity, new WorldGenSurfaceFissureCluster(true)), 1);
+        //GameRegistry.registerWorldGenerator(new RarityBasedWorldGen(x -> x.waterFissureClusterRarity, new WorldGenSurfaceFissureCluster(false)), 1);
+        GameRegistry.registerWorldGenerator(new WorldGenOreVeins(), 2);
         //todo: add cave decorator
         GameRegistry.registerWorldGenerator(new WorldGenTrees(), 4);
         GameRegistry.registerWorldGenerator(new WorldGenLooseRocks(), 5);
         GameRegistry.registerWorldGenerator(new WorldGenSoilPits(), 6);
         GameRegistry.registerWorldGenerator(new RarityBasedWorldGen(x -> x.largeRockRarity, new WorldGenLargeRocks()), 7);
-        //todo: add plants
     }
 
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event)
     {
         if (!isSignedBuild)
+        {
             log.warn("You are not running an official build. Please do not use this and then report bugs or issues.");
+        }
 
         HeatRecipeManager.postInit();
         FuelManager.postInit();
 
-        OreSpawnData.reloadOreGen();
+        VeinRegistry.INSTANCE.reloadOreGen();
     }
 
     @Mod.EventHandler
     public void onServerStarting(FMLServerStartingEvent event)
     {
         if (!isSignedBuild)
+        {
             log.warn("You are not running an official build. Please do not use this and then report bugs or issues.");
+        }
+
         event.registerServerCommand(new CommandStripWorld());
         event.registerServerCommand(new CommandGenTree());
         event.registerServerCommand(new CommandHeat());
         event.registerServerCommand(new CommandTimeTFC());
+        event.registerServerCommand(new CommandFindVeins());
+        event.registerServerCommand(new CommandNutrients());
     }
 
     @Mod.EventHandler

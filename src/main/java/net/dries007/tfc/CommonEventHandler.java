@@ -11,28 +11,35 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Items;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.item.*;
 import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.entity.player.PlayerContainerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.entity.player.UseHoeEvent;
 import net.minecraftforge.event.world.BlockEvent;
-import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 
 import net.dries007.tfc.api.capability.ItemStickCapability;
+import net.dries007.tfc.api.capability.nutrient.CapabilityFood;
+import net.dries007.tfc.api.capability.nutrient.IPlayerNutrients;
 import net.dries007.tfc.api.capability.size.CapabilityItemSize;
 import net.dries007.tfc.api.capability.size.Size;
 import net.dries007.tfc.api.capability.size.Weight;
+import net.dries007.tfc.api.types.Rock;
 import net.dries007.tfc.api.util.IPlaceableItem;
 import net.dries007.tfc.network.PacketCalendarUpdate;
+import net.dries007.tfc.network.PacketPlayerNutrientsUpdate;
+import net.dries007.tfc.objects.blocks.stone.BlockRockVariant;
 import net.dries007.tfc.objects.container.CapabilityContainerListener;
 import net.dries007.tfc.util.Helpers;
-import net.dries007.tfc.world.classic.CalendarTFC;
 
 import static net.dries007.tfc.api.util.TFCConstants.MOD_ID;
 
@@ -63,8 +70,7 @@ public final class CommonEventHandler
 
     /**
      * Handler for {@link IPlaceableItem}
-     * To add a new placeable item effect, eiether implement {@link IPlaceableItem} or see {@link IPlaceableItem.Impl} for vanilla item usages
-     *
+     * To add a new placeable item effect, either implement {@link IPlaceableItem} or see {@link IPlaceableItem.Impl} for vanilla item usages
      * Notes:
      * 1) `onBlockActivate` doesn't get called when the player is sneaking, unless doesSneakBypassUse returns true.
      * 2) This event handler is fired first with the main hand as event.getStack()
@@ -79,13 +85,15 @@ public final class CommonEventHandler
         final ItemStack stack = event.getItemStack();
         final EntityPlayer player = event.getEntityPlayer();
 
-        if (IPlaceableItem.Impl.isPlaceable(stack))
+        IPlaceableItem placeable = IPlaceableItem.Impl.getPlaceable(stack);
+        if (placeable != null)
         {
-            IPlaceableItem placeable = IPlaceableItem.Impl.getPlaceable(stack);
             if (placeable.placeItemInWorld(world, pos, stack, player, event.getFace(), event.getHitVec()))
             {
-                player.setHeldItem(event.getHand(), Helpers.consumeItem(stack, player, placeable.consumeAmount()));
-
+                if (placeable.consumeAmount() > 0)
+                {
+                    player.setHeldItem(event.getHand(), Helpers.consumeItem(stack, player, placeable.consumeAmount()));
+                }
                 event.setCancellationResult(EnumActionResult.SUCCESS);
                 event.setCanceled(true);
             }
@@ -104,9 +112,9 @@ public final class CommonEventHandler
         final ItemStack stack = event.getItemStack();
         final EntityPlayer player = event.getEntityPlayer();
 
-        if (IPlaceableItem.Impl.isUsable(stack))
+        IPlaceableItem placeable = IPlaceableItem.Impl.getUsable(stack);
+        if (placeable != null)
         {
-            IPlaceableItem placeable = IPlaceableItem.Impl.getUsable(stack);
             if (placeable.placeItemInWorld(world, pos, stack, player, event.getFace(), null))
             {
                 player.setHeldItem(event.getHand(), Helpers.consumeItem(stack, player, 1));
@@ -114,37 +122,62 @@ public final class CommonEventHandler
             event.setCancellationResult(EnumActionResult.SUCCESS);
             event.setCanceled(true);
         }
+    }
+
+    @SubscribeEvent
+    public static void onUseHoe(UseHoeEvent event)
+    {
+        World world = event.getWorld();
+        BlockPos pos = event.getPos();
+        IBlockState state = world.getBlockState(pos);
+
+        if (state.getBlock() instanceof BlockRockVariant)
+        {
+            BlockRockVariant blockRock = (BlockRockVariant) state.getBlock();
+            if (blockRock.getType() == Rock.Type.GRASS || blockRock.getType() == Rock.Type.DIRT)
+            {
+                if (!world.isRemote)
+                {
+                    world.playSound(event.getEntityPlayer(), pos, SoundEvents.ITEM_HOE_TILL, SoundCategory.BLOCKS, 1.0F, 1.0F);
+                    world.setBlockState(pos, BlockRockVariant.get(blockRock.getRock(), Rock.Type.FARMLAND).getDefaultState());
+                }
+                event.setResult(Event.Result.ALLOW);
+            }
+        }
 
     }
 
-    //Used for IItemSize capability. You can either implement the interface or use the capability
     @SubscribeEvent
     public static void attachItemCapabilities(AttachCapabilitiesEvent<ItemStack> e)
     {
         ItemStack stack = e.getObject();
-        // Skip items with existing capabilities
-        if (CapabilityItemSize.getIItemSize(stack) != null) return;
-
         Item item = stack.getItem();
-        boolean canStack = stack.getMaxStackSize() > 1; // This is necessary so it isn't accidentally overridden by a default implementation
 
-        // todo: Add more items here
-        if (item == Items.COAL)
-            CapabilityItemSize.add(e, Items.COAL, Size.SMALL, Weight.MEDIUM, canStack);
-        else if (item == Items.STICK)
-            e.addCapability(ItemStickCapability.KEY, new ItemStickCapability(e.getObject().getTagCompound()));
-        else if (item == Items.CLAY_BALL)
-            CapabilityItemSize.add(e, item, Size.SMALL, Weight.MEDIUM, canStack);
+        // Item Size
+        // Skip items with existing capabilities
+        if (!stack.isEmpty() && CapabilityItemSize.getIItemSize(stack) == null)
+        {
 
-            // Final checks for general item types
-        else if (item instanceof ItemTool)
-            CapabilityItemSize.add(e, item, Size.LARGE, Weight.MEDIUM, canStack);
-        else if (item instanceof ItemArmor)
-            CapabilityItemSize.add(e, item, Size.LARGE, Weight.HEAVY, canStack);
-        else if (item instanceof ItemBlock)
-            CapabilityItemSize.add(e, item, Size.SMALL, Weight.MEDIUM, canStack);
-        else
-            CapabilityItemSize.add(e, item, Size.VERY_SMALL, Weight.LIGHT, canStack);
+            boolean canStack = stack.getMaxStackSize() > 1; // This is necessary so it isn't accidentally overridden by a default implementation
+
+            // todo: Add more items here
+            if (item == Items.COAL)
+                CapabilityItemSize.add(e, Items.COAL, Size.SMALL, Weight.MEDIUM, canStack);
+            else if (item == Items.STICK)
+                e.addCapability(ItemStickCapability.KEY, new ItemStickCapability(e.getObject().getTagCompound()));
+            else if (item == Items.CLAY_BALL)
+                CapabilityItemSize.add(e, item, Size.SMALL, Weight.MEDIUM, canStack);
+
+                // Final checks for general item types
+            else if (item instanceof ItemTool)
+                CapabilityItemSize.add(e, item, Size.LARGE, Weight.MEDIUM, canStack);
+            else if (item instanceof ItemArmor)
+                CapabilityItemSize.add(e, item, Size.LARGE, Weight.HEAVY, canStack);
+            else if (item instanceof ItemBlock)
+                CapabilityItemSize.add(e, item, Size.SMALL, Weight.MEDIUM, canStack);
+            else
+                CapabilityItemSize.add(e, item, Size.VERY_SMALL, Weight.LIGHT, canStack);
+        }
     }
 
     @SubscribeEvent
@@ -158,6 +191,14 @@ public final class CommonEventHandler
 
             // World Data (Calendar) Sync Handler
             TerraFirmaCraft.getNetwork().sendTo(new PacketCalendarUpdate(), player);
+
+            // Player nutrients
+            IPlayerNutrients cap = player.getCapability(CapabilityFood.CAPABILITY_PLAYER_NUTRIENTS, null);
+            if (cap != null)
+            {
+                cap.updateNutrientsFastForward();
+                TerraFirmaCraft.getNetwork().sendTo(new PacketPlayerNutrientsUpdate(cap), player);
+            }
         }
     }
 
@@ -180,17 +221,6 @@ public final class CommonEventHandler
         {
             final EntityPlayerMP player = (EntityPlayerMP) event.getEntityPlayer();
             event.getContainer().addListener(new CapabilityContainerListener(player));
-        }
-    }
-
-    @SubscribeEvent
-    public static void onWorldLoad(WorldEvent.Load event)
-    {
-        // Calendar Sync / Initialization
-        final World world = event.getWorld();
-        if (world.provider.getDimension() == 0 && !world.isRemote)
-        {
-            CalendarTFC.CalendarWorldData.onLoad(event.getWorld());
         }
     }
 }

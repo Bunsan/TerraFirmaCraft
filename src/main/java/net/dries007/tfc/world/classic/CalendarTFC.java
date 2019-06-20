@@ -6,6 +6,8 @@
 package net.dries007.tfc.world.classic;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -18,6 +20,8 @@ import net.minecraft.world.storage.MapStorage;
 import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.event.CommandEvent;
 import net.minecraftforge.event.GameRuleChangeEvent;
+import net.minecraftforge.event.entity.player.PlayerWakeUpEvent;
+import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -43,7 +47,8 @@ public class CalendarTFC
     /* This needs to be a float, otherwise there are ~62 minutes per hour */
     public static final float TICKS_IN_MINUTE = TICKS_IN_HOUR / 60f;
     public static final int HOURS_IN_DAY = 24;
-
+    private static final String[] DAY_NAMES = new String[] {"sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"};
+    private static final Map<String, String> BIRTHDAYS = new HashMap<>();
     /**
      * Total time for the world, directly from world#getTotalTime
      * Synced via two event handlers, one on Client Tick, one on World Tick
@@ -58,13 +63,28 @@ public class CalendarTFC
     private static long calendarTime;
     private static long calendarOffset;
     private static boolean doCalendarCycle;
-
     /* This is set via the timetfc command */
     private static int daysInMonth;
     /* These are calculated from above */
     private static int daysInYear;
     private static int ticksInYear;
     private static int ticksInMonth;
+
+    static
+    {
+        // Original developers, all hail their glorious creation
+        BIRTHDAYS.put("JULY7", "Bioxx's Birthday");
+        BIRTHDAYS.put("JUNE18", "Kitty's Birthday");
+        BIRTHDAYS.put("OCTOBER2", "Dunk's Birthday");
+
+        // 1.12+ Dev Team and significant contributors
+        BIRTHDAYS.put("MAY1", "Dries's Birthday");
+        BIRTHDAYS.put("DECEMBER9", "Alcatraz's Birthday");
+        BIRTHDAYS.put("FEBRUARY31", "Bunsan's Birthday");
+        BIRTHDAYS.put("MARCH14", "Claycorp's Birthday");
+        BIRTHDAYS.put("DECEMBER1", "LightningShock's Birthday");
+        BIRTHDAYS.put("JANUARY20", "Therighthon's Birthday");
+    }
 
     public static void preInit()
     {
@@ -103,15 +123,60 @@ public class CalendarTFC
         return totalTime;
     }
 
+    private static void setTotalTime(long totalTime)
+    {
+        CalendarTFC.totalTime = totalTime;
+        if (doCalendarCycle)
+        {
+            // Set the calendar time based on the current offset
+            calendarTime = totalTime + calendarOffset;
+        }
+        else
+        {
+            // Re-calculate the offset to keep the calendar time static
+            calendarOffset = calendarTime - totalTime;
+        }
+    }
+
     public static int getMinuteOfHour()
     {
-        return (int) ((calendarTime % TICKS_IN_HOUR) / TICKS_IN_MINUTE);
+        return getMinuteOfHour(calendarTime);
     }
 
     @Nonnull
     public static String getTimeAndDate()
     {
-        return String.format("%02d:%02d %s %02d, %04d", getHourOfDay(), getMinuteOfHour(), getMonthOfYear().getShortName(), getDayOfMonth(), getTotalYears());
+        return getTimeAndDate(getHourOfDay(), getMinuteOfHour(), getMonthOfYear().getShortName(), getDayOfMonth(), getTotalYears());
+    }
+
+    @Nonnull
+    public static String getDayName()
+    {
+        String date = getMonthOfYear().name() + getDayOfMonth();
+        String birthday = BIRTHDAYS.get(date);
+        if (birthday != null)
+        {
+            return birthday;
+        }
+        long days = getTotalDays();
+        return "tfc.enum.day." + DAY_NAMES[(int) (days % 7)];
+    }
+
+    @Nonnull
+    public static String getTimeAndDate(long calendarTime)
+    {
+        return getTimeAndDate(getHourOfDay(calendarTime), getMinuteOfHour(calendarTime), getMonthOfYear(calendarTime).getShortName(), getDayOfMonth(calendarTime), getTotalYears(calendarTime));
+    }
+
+    @Nonnull
+    public static String getTimeAndDate(int hour, int minute, String month, int day, long years)
+    {
+        return String.format("%02d:%02d %s %02d, %04d", hour, minute, month, day, years);
+    }
+
+    public static long getTotalYears()
+    {
+        return getTotalYears(calendarTime);
     }
 
     public static long getTotalDays()
@@ -129,40 +194,20 @@ public class CalendarTFC
         return calendarTime / ticksInMonth;
     }
 
-    public static long getTotalYears()
-    {
-        // Years start at 1000, and begin at Jan, but month is indexed starting at March
-        return 1000 + (calendarTime + 2 * ticksInMonth) / ticksInYear;
-    }
-
     public static int getHourOfDay()
     {
-        return (int) ((6 + (calendarTime / TICKS_IN_HOUR)) % HOURS_IN_DAY);
-    }
-
-    private static void setTotalTime(long totalTime)
-    {
-        CalendarTFC.totalTime = totalTime;
-        if (doCalendarCycle)
-        {
-            // Set the calendar time based on the current offset
-            calendarTime = totalTime + calendarOffset;
-        }
-        else
-        {
-            // Re-calculate the offset to keep the calendar time static
-            calendarOffset = calendarTime - totalTime;
-        }
+        return getHourOfDay(calendarTime);
     }
 
     public static int getDayOfMonth()
     {
-        return (int) ((calendarTime / TICKS_IN_DAY) % daysInMonth);
+        return getDayOfMonth(calendarTime);
     }
 
+    @Nonnull
     public static Month getMonthOfYear()
     {
-        return Month.getById((int) ((calendarTime / ticksInMonth) % 12));
+        return getMonthOfYear(calendarTime);
     }
 
     public static int getDaysInMonth()
@@ -173,6 +218,33 @@ public class CalendarTFC
     public static int getDaysInYear()
     {
         return daysInYear;
+    }
+
+    // Calculation based functions - do not change these unless broken
+    private static long getTotalYears(long calendarTime)
+    {
+        // Years start at 1000, and begin at Jan, but month is indexed starting at March
+        return 1000 + (calendarTime + 2 * ticksInMonth) / ticksInYear;
+    }
+
+    private static int getMinuteOfHour(long calendarTime)
+    {
+        return (int) ((calendarTime % TICKS_IN_HOUR) / TICKS_IN_MINUTE);
+    }
+
+    private static int getHourOfDay(long calendarTime)
+    {
+        return (int) ((6 + (calendarTime / TICKS_IN_HOUR)) % HOURS_IN_DAY);
+    }
+
+    private static int getDayOfMonth(long calendarTime)
+    {
+        return (int) ((calendarTime / TICKS_IN_DAY) % daysInMonth);
+    }
+
+    private static Month getMonthOfYear(long calendarTime)
+    {
+        return Month.getById((int) ((calendarTime / ticksInMonth) % 12));
     }
 
     public enum Month
@@ -199,7 +271,10 @@ public class CalendarTFC
             averageTempMod /= 12f;
         }
 
-        public static float getAverageTempMod() { return averageTempMod; }
+        public static float getAverageTempMod()
+        {
+            return averageTempMod;
+        }
 
         public static Month getById(int id)
         {
@@ -217,11 +292,20 @@ public class CalendarTFC
             this.abrev = abrev;
         }
 
-        public int id() { return index; }
+        public int id()
+        {
+            return index;
+        }
 
-        public float getTempMod() { return tMod; }
+        public float getTempMod()
+        {
+            return tMod;
+        }
 
-        public String getShortName() { return abrev; }
+        public String getShortName()
+        {
+            return abrev;
+        }
 
         public Month next()
         {
@@ -268,7 +352,6 @@ public class CalendarTFC
         {
             // This is only called on server, so it needs to sync to client
             GameRules rules = event.getRules();
-            TerraFirmaCraft.getLog().info("Gamerule changed: " + event.getRuleName());
             if ("doDaylightCycle".equals(event.getRuleName()))
             {
                 CalendarTFC.doCalendarCycle = rules.getBoolean("doDaylightCycle");
@@ -283,6 +366,30 @@ public class CalendarTFC
             {
                 event.setCanceled(true);
                 event.getSender().sendMessage(new TextComponentTranslation(MOD_ID + ".tooltip.time_command_disabled"));
+            }
+        }
+
+        /**
+         * This allows beds to function correctly with TFC's calendar
+         *
+         * @param event {@link PlayerWakeUpEvent}
+         */
+        @SubscribeEvent
+        public static void onPlayerWakeUp(PlayerWakeUpEvent event)
+        {
+            // Set the calendar time to time=0. This will implicitly call CalendarTFC#update
+            long newCalendarTime = (CalendarTFC.getTotalDays() + 1) * TICKS_IN_DAY;
+            setCalendarTime(event.getEntityPlayer().getEntityWorld(), newCalendarTime);
+        }
+
+        @SubscribeEvent
+        public static void onWorldLoad(WorldEvent.Load event)
+        {
+            // Calendar Sync / Initialization
+            final World world = event.getWorld();
+            if (world.provider.getDimension() == 0 && !world.isRemote)
+            {
+                CalendarTFC.CalendarWorldData.onLoad(event.getWorld());
             }
         }
     }
