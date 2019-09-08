@@ -30,6 +30,8 @@ public class Rock extends IForgeRegistryEntry.Impl<Rock>
 {
     @GameRegistry.ObjectHolder("tfc:granite")
     public static final Rock GRANITE = Helpers.getNull();
+    @GameRegistry.ObjectHolder("tfc:basalt")
+    public static final Rock BASALT = Helpers.getNull();
 
     private final RockCategory rockCategory;
     private final ResourceLocation textureLocation;
@@ -111,7 +113,8 @@ public class Rock extends IForgeRegistryEntry.Impl<Rock>
 
     public enum Type
     {
-        RAW(Material.ROCK, NO_FALL, false, BlockRockRaw::new), // Todo: add collapsing when broken
+        RAW(Material.ROCK, FALL_VERTICAL, false, BlockRockRaw::new),
+        SPIKE(Material.ROCK, NO_FALL, false, BlockRockSpike::new),
         SMOOTH(Material.ROCK, NO_FALL, false),
         COBBLE(Material.ROCK, FALL_HORIZONTAL, false),
         BRICKS(Material.ROCK, NO_FALL, false),
@@ -120,7 +123,7 @@ public class Rock extends IForgeRegistryEntry.Impl<Rock>
         DIRT(Material.GROUND, FALL_HORIZONTAL, false),
         GRASS(Material.GRASS, FALL_HORIZONTAL, true),
         DRY_GRASS(Material.GRASS, FALL_HORIZONTAL, true),
-        CLAY(Material.GRASS, FALL_VERTICAL, false),
+        CLAY(Material.CLAY, FALL_VERTICAL, false),
         CLAY_GRASS(Material.GRASS, FALL_VERTICAL, true),
         FARMLAND(Material.GROUND, FALL_VERTICAL, false, BlockFarmlandTFC::new),
         PATH(Material.GROUND, FALL_VERTICAL, false, BlockPathTFC::new);
@@ -133,7 +136,7 @@ public class Rock extends IForgeRegistryEntry.Impl<Rock>
 
         Type(Material material, FallingBlockType gravType, boolean isGrass)
         {
-            // If no fall + no grass, then normal. If it can fall, then eiether fallable or fallable + connected (since grass always falls)
+            // If no fall + no grass, then normal. If it can fall, then either fallable or fallable + connected (since grass always falls)
             this(material, gravType, isGrass, (gravType == NO_FALL && !isGrass) ? BlockRockVariant::new :
                 (isGrass ? BlockRockVariantConnected::new : BlockRockVariantFallable::new));
         }

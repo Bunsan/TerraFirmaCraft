@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Random;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.SoundType;
@@ -31,10 +32,10 @@ import net.dries007.tfc.objects.blocks.BlocksTFC;
 import net.dries007.tfc.world.classic.worldgen.vein.VeinRegistry;
 import net.dries007.tfc.world.classic.worldgen.vein.VeinType;
 
+@ParametersAreNonnullByDefault
 public class ItemProspectorPick extends ItemMetalTool
 {
     private static final int PROSPECT_RADIUS = 12;
-    // todo: balance. 40 ticks feels really long, especially for the preciseness you want from the propick
     private static final int COOLDOWN = 10;
     private static final Random RANDOM = new Random();
 
@@ -61,15 +62,15 @@ public class ItemProspectorPick extends ItemMetalTool
 
                 RANDOM.setSeed(pos.toLong());
                 ItemStack targetStack = getOreStack(state, false);
-                if (RANDOM.nextFloat() < 0.4)
-                {
-                    // False negative
-                    player.sendStatusMessage(new TextComponentTranslation("tfc.propick.found_nothing"), ConfigTFC.CLIENT.propickOutputToActionBar);
-                }
-                else if (targetStack != null)
+                if (targetStack != null)
                 {
                     // Just clicked on an ore block
                     player.sendStatusMessage(new TextComponentTranslation("tfc.propick.found").appendText(" " + targetStack.getDisplayName()), ConfigTFC.CLIENT.propickOutputToActionBar);
+                }
+                else if (RANDOM.nextFloat() < 0.4)
+                {
+                    // False negative
+                    player.sendStatusMessage(new TextComponentTranslation("tfc.propick.found_nothing"), ConfigTFC.CLIENT.propickOutputToActionBar);
                 }
                 else
                 {
@@ -110,19 +111,19 @@ public class ItemProspectorPick extends ItemMetalTool
 
                         if (ConfigTFC.GENERAL.debug)
                         {
-                            for (int i = 0; i < results.size(); i++)
+                            for (ProspectResult debugResult : results)
                             {
-                                player.sendStatusMessage(new TextComponentString(result.ore.getDisplayName() + ": " + String.format("%.02f", result.score)), false);
+                                player.sendStatusMessage(new TextComponentString(debugResult.ore.getDisplayName() + ": " + String.format("%.02f", debugResult.score)), false);
                             }
                         }
                     }
                 }
             }
-        }
-        else
-        {
-            //client side, add hit particles
-            addHitBlockParticle(worldIn, pos, facing, state);
+            else
+            {
+                //client side, add hit particles
+                addHitBlockParticle(worldIn, pos, facing, state);
+            }
         }
 
         return EnumActionResult.SUCCESS;
@@ -161,11 +162,12 @@ public class ItemProspectorPick extends ItemMetalTool
     @Nullable
     private ItemStack getOreStack(IBlockState blockState, boolean ignoreGrade)
     {
-        if (blockState == null || BlocksTFC.isGround(blockState))
+        if (BlocksTFC.isGround(blockState))
         {
             return null;
         }
         for (VeinType vein : VeinRegistry.INSTANCE.getVeins().values())
+        {
             if (vein.isOreBlock(blockState))
             {
                 Block block = blockState.getBlock();
@@ -177,6 +179,7 @@ public class ItemProspectorPick extends ItemMetalTool
                 else
                     return new ItemStack(Item.getItemFromBlock(block), 1, block.getMetaFromState(blockState));
             }
+        }
         return null;
     }
 

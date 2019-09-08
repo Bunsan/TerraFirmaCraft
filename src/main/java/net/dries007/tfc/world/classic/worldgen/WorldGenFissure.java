@@ -5,12 +5,10 @@
 
 package net.dries007.tfc.world.classic.worldgen;
 
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
-import com.google.common.collect.ImmutableList;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.init.Blocks;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
@@ -22,261 +20,235 @@ import net.minecraftforge.fml.common.IWorldGenerator;
 import net.dries007.tfc.api.types.Rock;
 import net.dries007.tfc.objects.blocks.BlocksTFC;
 import net.dries007.tfc.objects.blocks.stone.BlockRockVariant;
-import net.dries007.tfc.util.CollapseData;
-import net.dries007.tfc.util.CollapseList;
 import net.dries007.tfc.world.classic.ChunkGenTFC;
 import net.dries007.tfc.world.classic.biomes.BiomesTFC;
 import net.dries007.tfc.world.classic.chunkdata.ChunkDataTFC;
 
-import static net.dries007.tfc.util.CollapseData.Direction.*;
 import static net.dries007.tfc.world.classic.chunkdata.ChunkDataTFC.getRock3;
 
 /**
- * todo: fix cascading lag. Priority: medium - low.
- * See <a href="https://github.com/TerraFirmaCraft/TerraFirmaCraft/issues/40">issue</a> here.
+ * Rewrite on fissure generation logic
+ * *EXPERIMENTAL* Needs more tweaking in rock placement
  */
 public class WorldGenFissure implements IWorldGenerator
 {
     private final IBlockState fillBlock;
     private final boolean checkStability;
-    private final int minTunnel;
-    private final int depth;
 
-    public WorldGenFissure(boolean lava, int depth)
+    public WorldGenFissure(boolean lava)
     {
-        fillBlock = lava ? ChunkGenTFC.LAVA : ChunkGenTFC.FRESH_WATER;
+        fillBlock = lava ? ChunkGenTFC.LAVA : ChunkGenTFC.HOT_WATER;
         checkStability = lava;
-        minTunnel = 5;
-        this.depth = depth;
-    }
-
-    WorldGenFissure(IBlockState state)
-    {
-        fillBlock = state;
-        checkStability = false;
-        depth = -1;
-        minTunnel = 1;
     }
 
     @Override
     public void generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator chunkGenerator, IChunkProvider chunkProvider)
     {
-        BlockPos start = new ChunkPos(chunkX, chunkZ).getBlock(random.nextInt(16) + 8, 0, random.nextInt(16) + 8);
+        BlockPos start = new ChunkPos(chunkX, chunkZ).getBlock(random.nextInt(14) + 9, 0, random.nextInt(14) + 9);
         Biome biome = world.getBiome(start);
 
         if (biome == BiomesTFC.BEACH || biome == BiomesTFC.OCEAN || biome == BiomesTFC.GRAVEL_BEACH || biome == BiomesTFC.LAKE || biome == BiomesTFC.RIVER || biome == BiomesTFC.DEEP_OCEAN)
+        {
             return;
+        }
 
-        start = world.getTopSolidOrLiquidBlock(start).add(0, -1, 0);
-        if (depth > 0)
-            start = start.add(0, -depth - random.nextInt(60 /* todo: setting? */), 0);
+        start = world.getTopSolidOrLiquidBlock(start).down(3);
 
-        generate(world, random, start);
-    }
-
-    protected void generate(World world, Random rng, BlockPos start)
-    {
         IBlockState block = world.getBlockState(start);
         if (BlocksTFC.isWater(block) && !BlocksTFC.isGround(block)) return;
         final boolean stable = ChunkDataTFC.isStable(world, start);
         if (checkStability && stable)
+        {
             return;
-
-        int creviceDepth = 1;
-        if (rng.nextInt(100) < 50) creviceDepth += 2 + rng.nextInt(8);
-
-        int poolDepth = 1 + rng.nextInt(Math.max(creviceDepth - 1, 1));
-
-        for (int d = 1; d <= poolDepth; d++) if (!world.getBlockState(start.add(0, -d, 0)).isNormalCube()) return;
-
-        if (depth > 0)
-            start = start.add(0, -20 - rng.nextInt(depth), 0);
+        }
 
         final IBlockState rock = BlockRockVariant.get(getRock3(world, start), Rock.Type.RAW).getDefaultState();
-        final IBlockState localFillBlock = (!stable && BlocksTFC.isWater(fillBlock)) ? ChunkGenTFC.HOT_WATER : fillBlock;
 
-        List<BlockPos> list = getCollapseMap(world, start.add(0, -creviceDepth, 0), fillBlock, poolDepth);
-
-        for (BlockPos pos : list)
+        int depth = 2 + random.nextInt(3);
+        int radius = 1 + random.nextInt(2);
+        // Clear blocks above the fissure
+        List<BlockPos> clearing = getCircle(start, radius + 2);
+        for (int y = 1; y < 4; y++)
         {
-            if (pos.getY() < 10 && world.getBlockState(pos).getBlock() != Blocks.BEDROCK)
+            for (BlockPos clear : clearing)
             {
-                world.setBlockToAir(pos);
+                world.setBlockToAir(clear.up(y));
             }
-            for (int d = 1; d <= poolDepth; d++)
-                fill(world, pos.add(0, -d, 0), rock, localFillBlock);
-
-            for (int d = 0; d <= creviceDepth; d++)
-            {
-                carve(world, pos.add(0, d, 0), rock);
-                if (rng.nextInt(3) == 0) carve(world, pos.add(-1 + rng.nextInt(3), d, -1 + rng.nextInt(3)), rock);
-            }
-            if (localFillBlock == ChunkGenTFC.LAVA)
-                world.setBlockState(pos.add(0, -poolDepth - 1, 0), rock, 2);
         }
-
-        if (list.size() > 10) makeTunnel(rng, world, start.add(0, -poolDepth - 1, 0), rock, localFillBlock);
-    }
-
-    private List<BlockPos> getCollapseMap(World world, BlockPos pos, IBlockState fillBlock, int poolDepth)
-    {
-        final ImmutableList.Builder<BlockPos> b = ImmutableList.builder();
-
-        final IBlockState rock = fillBlock == ChunkGenTFC.LAVA ?
-            BlockRockVariant.get(getRock3(world, pos), Rock.Type.RAW).getDefaultState() :
-            BlockRockVariant.get(ChunkDataTFC.getRockHeight(world, pos), Rock.Type.RAW).getDefaultState();
-
-        // todo this must be also used somewhere else probably move it.
-        // todo this must be optimizable also
-
-        CollapseList collapseList = new CollapseList();
-
-        for (CollapseData.Direction d : CollapseData.Direction.values())
-            collapseList.add(new CollapseData(d.offset(pos.add(0, -1, 0)), 0.55f - d.decrement, d));
-
-        while (!collapseList.isEmpty())
+        // Actually fills the fissure
+        // This is left here for testing.
+        Set<BlockPos> blocks = getCollapseSet(random, start, radius, depth);
+        for (BlockPos filling : blocks)
         {
-            CollapseData data = collapseList.pop();
-
-            if (!world.isBlockLoaded(data.pos))
-                continue; // todo: non-successful attempt at stopping cascading world gen
-
-            IBlockState block = world.getBlockState(data.pos);
-
-            if (BlocksTFC.isGround(block) && world.rand.nextFloat() < data.chance)
+            smartFill(world, filling, blocks, rock, fillBlock);
+        }
+        //T his is an experimental way of fixing "missing" rocks
+        // I disabled it because the looks is more man-made
+        // Replaces the blocks not filled by water/lava
+        /*
+        for(int y = 0; y <= depth + 1; y++)
+        {
+            for (BlockPos clear : clearing) //Using the same circle we used to clear blocks
             {
-                b.add(data.pos);
-
-                switch (data.direction)
+                BlockPos replace = clear.down(y);
+                if(!world.isAirBlock(replace) && world.getBlockState(replace) != fillBlock)
                 {
-                    case NORTH:
-                        collapseList.add(new CollapseData(NORTH.offset(pos), data.chance - NORTH.decrement, NORTH));
-                        collapseList.add(new CollapseData(EAST.offset(pos), data.chance - EAST.decrement, EAST));
-                        collapseList.add(new CollapseData(WEST.offset(pos), data.chance - WEST.decrement, WEST));
-                        break;
-                    case SOUTH:
-                        collapseList.add(new CollapseData(SOUTH.offset(pos), data.chance - SOUTH.decrement, SOUTH));
-                        collapseList.add(new CollapseData(EAST.offset(pos), data.chance - EAST.decrement, EAST));
-                        collapseList.add(new CollapseData(WEST.offset(pos), data.chance - WEST.decrement, WEST));
-                        break;
-                    case EAST:
-                        collapseList.add(new CollapseData(SOUTH.offset(pos), data.chance - SOUTH.decrement, SOUTH));
-                        collapseList.add(new CollapseData(EAST.offset(pos), data.chance - EAST.decrement, EAST));
-                        collapseList.add(new CollapseData(NORTH.offset(pos), data.chance - NORTH.decrement, NORTH));
-                        break;
-                    case WEST:
-                        collapseList.add(new CollapseData(SOUTH.offset(pos), data.chance - SOUTH.decrement, SOUTH));
-                        collapseList.add(new CollapseData(WEST.offset(pos), data.chance - WEST.decrement, WEST));
-                        collapseList.add(new CollapseData(NORTH.offset(pos), data.chance - NORTH.decrement, NORTH));
-                        break;
-                    case NORTHEAST:
-                        collapseList.add(new CollapseData(NORTHEAST.offset(pos), data.chance - NORTHEAST.decrement, NORTHEAST));
-                        collapseList.add(new CollapseData(EAST.offset(pos), data.chance - EAST.decrement, EAST));
-                        collapseList.add(new CollapseData(NORTH.offset(pos), data.chance - NORTH.decrement, NORTH));
-                        break;
-                    case SOUTHEAST:
-                        collapseList.add(new CollapseData(SOUTHEAST.offset(pos), data.chance - SOUTHEAST.decrement, SOUTHEAST));
-                        collapseList.add(new CollapseData(SOUTH.offset(pos), data.chance - SOUTH.decrement, SOUTH));
-                        collapseList.add(new CollapseData(EAST.offset(pos), data.chance - EAST.decrement, EAST));
-                        break;
-                    case NORTHWEST:
-                        collapseList.add(new CollapseData(NORTHWEST.offset(pos), data.chance - NORTHWEST.decrement, NORTHWEST));
-                        collapseList.add(new CollapseData(WEST.offset(pos), data.chance - WEST.decrement, WEST));
-                        collapseList.add(new CollapseData(NORTH.offset(pos), data.chance - NORTH.decrement, NORTH));
-                        break;
-                    case SOUTHWEST:
-                        collapseList.add(new CollapseData(SOUTHWEST.offset(pos), data.chance - SOUTHWEST.decrement, SOUTHWEST));
-                        collapseList.add(new CollapseData(SOUTH.offset(pos), data.chance - SOUTH.decrement, SOUTH));
-                        collapseList.add(new CollapseData(WEST.offset(pos), data.chance - WEST.decrement, WEST));
-                        break;
+                    world.setBlockState(replace, rock);
                 }
             }
-            else if (data.chance < 1)
+        }*/
+    }
+
+    /**
+     * Gives a list of block positions for a circle.
+     * Used to clear the blocks above the fissure
+     *
+     * @param center the center block
+     * @param radius the radius
+     * @return ArrayList of blockPos for a circle
+     */
+    private List<BlockPos> getCircle(BlockPos center, int radius)
+    {
+        List<BlockPos> list = new ArrayList<>();
+        double rSq = Math.pow(radius, 2);
+        for (int x = -radius + center.getX(); x <= +radius + center.getX(); x++)
+        {
+            for (int z = -radius + center.getZ(); z <= +radius + center.getZ(); z++)
             {
-                for (int i = 0; i <= poolDepth; i++)
+                if (Math.pow(x - center.getX(), 2) + Math.pow(z - center.getZ(), 2) <= rSq)
                 {
-                    if (BlocksTFC.isGround(world.getBlockState(pos.add(0, -i, 0))))
-                        world.setBlockState(pos.add(0, -i, 0), rock, 2);
+                    list.add(new BlockPos(x, center.getY(), z));
                 }
             }
         }
-        return b.build();
+        return list;
     }
 
-    private void carve(World world, BlockPos pos, IBlockState state)
+    /**
+     * Cylinder like fissure.
+     *
+     * @param random the Random obj from generate to keep it procedural
+     * @param center the top-center of the cylinder
+     * @param radius the radius of the circle
+     * @param depth  the depth of this fissure
+     * @return a Set containing block pos to fill with hot water/lava
+     */
+    private Set<BlockPos> getCollapseSet(Random random, BlockPos center, int radius, int depth)
     {
-        // todo: check if this should even update the blocks (flags = 3 means update) I think this only causes lag. (if not also replace `setBlockToAir`)
-        if (!world.isAirBlock(pos) && BlocksTFC.isGround(world.getBlockState(pos))) world.setBlockToAir(pos);
-        BlockPos p = pos.add(-1, 0, 0);
-        if (!world.isAirBlock(p) && BlocksTFC.isGround(world.getBlockState(p))) world.setBlockState(p, state, 3);
-        p = pos.add(1, 0, 0);
-        if (!world.isAirBlock(p) && BlocksTFC.isGround(world.getBlockState(p))) world.setBlockState(p, state, 3);
-        p = pos.add(0, 0, -1);
-        if (!world.isAirBlock(p) && BlocksTFC.isGround(world.getBlockState(p))) world.setBlockState(p, state, 3);
-        p = pos.add(0, 0, 1);
-        if (!world.isAirBlock(p) && BlocksTFC.isGround(world.getBlockState(p))) world.setBlockState(p, state, 3);
-    }
-
-    private void fill(World world, BlockPos pos, IBlockState rock, IBlockState fillBlock)
-    {
-        // todo: check if this should even update the blocks (flags = 3 means update) I think this only causes lag. (if not also replace `setBlockToAir`)
-        world.setBlockState(pos, fillBlock, 2);
-        BlockPos p = pos.add(-1, 0, 0);
-        if (world.isAirBlock(p)) world.setBlockState(p, rock, 3);
-        p = pos.add(-1, 0, 0);
-        if (world.isAirBlock(p)) world.setBlockState(p, rock, 3);
-        p = pos.add(1, 0, 0);
-        if (world.isAirBlock(p)) world.setBlockState(p, rock, 3);
-        p = pos.add(0, 0, -1);
-        if (world.isAirBlock(p)) world.setBlockState(p, rock, 3);
-        p = pos.add(0, 0, 1);
-        if (world.isAirBlock(p)) world.setBlockState(p, rock, 3);
-        p = pos.add(0, -1, 0);
-        if (world.isAirBlock(p)) world.setBlockState(p, rock, 3);
-        p = pos.add(0, 1, 0);
-        if (world.isAirBlock(p)) world.setBlockState(p, rock, 3);
-    }
-
-
-    private void makeTunnel(Random random, World world, BlockPos pos, IBlockState rock, IBlockState fillBlock)
-    {
-        float downChance = 75;
-        while (pos.getZ() > minTunnel)
+        int maxOffset = 2 + random.nextInt(radius);
+        Set<BlockPos> blocks = new HashSet<>();
+        for (int y = 0; y < depth; y++)
         {
-            if (random.nextFloat() < downChance / 100f)
+            BlockPos centerHeight = center.down(y);
+            double rSq = Math.pow(radius, 2);
+            for (int x = -radius + centerHeight.getX(); x <= +radius + centerHeight.getX(); x++)
             {
-                pos = pos.add(0, -1, 0);
+                for (int z = -radius + centerHeight.getZ(); z <= +radius + centerHeight.getZ(); z++)
+                {
+                    if (Math.pow(x - centerHeight.getX(), 2) + Math.pow(z - centerHeight.getZ(), 2) <= rSq)
+                    {
+                        BlockPos b = new BlockPos(x, centerHeight.getY(), z);
+                        if (random.nextFloat() < 0.65f)
+                        {
+                            blocks.add(b);
+                            for (EnumFacing facing : EnumFacing.VALUES)
+                            {
+                                if (facing == EnumFacing.UP) continue;
+                                int off = 0;
+                                while (off < maxOffset && random.nextFloat() < 0.35f)
+                                {
+                                    off++;
+                                    blocks.add(b.offset(facing));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // Now, let's make a "tunnel" all way down so this is gonna look a bit more like a fissure
+        int tunnelDepth = depth + 20 + random.nextInt(60);
+        int tunnelY = center.down(tunnelDepth).getY();
+        if (tunnelY < 20) tunnelY = 20;
+        BlockPos tunnelPos = center.down(depth);
+        blocks.add(tunnelPos);
+        radius = 8;
+        while (tunnelPos.getY() > tunnelY)
+        {
+            int value = random.nextInt(8); // 50% down, 12.5% each side
+            if (value < 1)
+            {
+                tunnelPos = tunnelPos.offset(EnumFacing.NORTH);
+            }
+            else if (value < 2)
+            {
+                tunnelPos = tunnelPos.offset(EnumFacing.SOUTH);
+            }
+            else if (value < 3)
+            {
+                tunnelPos = tunnelPos.offset(EnumFacing.EAST);
+            }
+            else if (value < 4)
+            {
+                tunnelPos = tunnelPos.offset(EnumFacing.WEST);
             }
             else
             {
-                int dir = random.nextInt(3);
-                switch (dir)
+                tunnelPos = tunnelPos.down();
+            }
+            // Keep it under control
+            if (tunnelPos.getX() > center.getX() + radius)
+            {
+                tunnelPos = tunnelPos.add(-1, 0, 0);
+            }
+            if (tunnelPos.getX() < center.getX() - radius)
+            {
+                tunnelPos = tunnelPos.add(1, 0, 0);
+            }
+            if (tunnelPos.getZ() > center.getZ() + radius)
+            {
+                tunnelPos = tunnelPos.add(0, 0, -1);
+            }
+            if (tunnelPos.getZ() < center.getZ() - radius)
+            {
+                tunnelPos = tunnelPos.add(0, 0, 1);
+            }
+            blocks.add(tunnelPos);
+            for (EnumFacing horiz : EnumFacing.HORIZONTALS)
+            {
+                blocks.add(tunnelPos.offset(horiz));
+            }
+        }
+        return blocks;
+    }
+
+    // A bit smarter fill, try to not fill the "insides" with rock
+    // Needs more tweaking
+    private void smartFill(World world, BlockPos pos, Set<BlockPos> fillBlockPos, IBlockState rock, IBlockState fillBlock)
+    {
+        world.setBlockState(pos, fillBlock);
+        for (EnumFacing facing : EnumFacing.VALUES)
+        {
+            if (facing == EnumFacing.UP) continue;
+            if (world.getBlockState(pos.offset(facing)) == fillBlock) continue;
+            BlockPos rockPos = pos.offset(facing);
+            int filledBlocks = 0;
+            for (EnumFacing facing2 : EnumFacing.VALUES)
+            {
+                BlockPos facingPos = rockPos.offset(facing2);
+                if (fillBlockPos.contains(facingPos))
                 {
-                    case 0:
-                        pos = pos.add(-1, 0, 0);
-                        break;
-                    case 1:
-                        pos = pos.add(1, 0, 0);
-                        break;
-                    case 2:
-                        pos = pos.add(0, 0, -1);
-                        break;
-                    case 3:
-                        pos = pos.add(0, 0, 1);
-                        break;
+                    filledBlocks++;
                 }
             }
-
-            world.setBlockState(pos, fillBlock, 2);
-
-            BlockPos p = pos.add(1, 0, 0);
-            if (world.getBlockState(p).getMaterial() != fillBlock.getMaterial()) world.setBlockState(p, rock, 2);
-            p = pos.add(-1, 0, 0);
-            if (world.getBlockState(p).getMaterial() != fillBlock.getMaterial()) world.setBlockState(p, rock, 2);
-            p = pos.add(0, 0, 1);
-            if (world.getBlockState(p).getMaterial() != fillBlock.getMaterial()) world.setBlockState(p, rock, 2);
-            p = pos.add(0, 0, -1);
-            if (world.getBlockState(p).getMaterial() != fillBlock.getMaterial()) world.setBlockState(p, rock, 2);
+            if (filledBlocks < 3)
+            {
+                world.setBlockState(rockPos, rock);
+            }
+            else
+            {
+                world.setBlockState(rockPos, fillBlock);
+            }
         }
     }
 }

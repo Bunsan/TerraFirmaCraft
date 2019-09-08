@@ -22,6 +22,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 import net.dries007.tfc.client.TFCGuiHandler;
+import net.dries007.tfc.client.TFCSounds;
 import net.dries007.tfc.objects.blocks.BlocksTFC;
 import net.dries007.tfc.objects.te.TELogPile;
 import net.dries007.tfc.util.Helpers;
@@ -47,7 +48,7 @@ public interface IPlaceableItem
     boolean placeItemInWorld(World world, BlockPos pos, ItemStack stack, EntityPlayer player, @Nullable EnumFacing facing, @Nullable Vec3d hitVec);
 
     /**
-     * This will be called after a sucessful placement. If this is nonzero, the player will consume that amount from their held item.
+     * This will be called after a successful placement. If this is nonzero, the player will consume that amount from their held item.
      *
      * @return the amount to consume
      */
@@ -69,25 +70,41 @@ public interface IPlaceableItem
             // This is also where charcoal piles grow
             placeableInstances.put(stack -> stack.getItem() == Items.COAL && stack.getMetadata() == 1, (world, pos, stack, player, facing, hitVec) ->
             {
-                if (facing == null) return false;
-                IBlockState state = world.getBlockState(pos);
-                if (state.getBlock() == BlocksTFC.CHARCOAL_PILE)
+                if (facing != null)
                 {
-                    if (state.getValue(LAYERS) < 8)
+                    IBlockState state = world.getBlockState(pos);
+                    if (state.getBlock() == BlocksTFC.CHARCOAL_PILE && state.getValue(LAYERS) < 8)
                     {
-                        world.setBlockState(pos, state.withProperty(LAYERS, state.getValue(LAYERS) + 1));
-                        world.playSound(null, pos, SoundEvents.BLOCK_GRAVEL_PLACE, SoundCategory.BLOCKS, 1.0f, 0.5f);
-                        return true;
+                        // Check the player isn't standing inside the placement area for the next layer
+                        IBlockState stateToPlace = state.withProperty(LAYERS, state.getValue(LAYERS) + 1);
+                        if (world.checkNoEntityCollision(stateToPlace.getBoundingBox(world, pos).offset(pos)))
+                        {
+                            if (!world.isRemote)
+                            {
+                                world.setBlockState(pos, state.withProperty(LAYERS, state.getValue(LAYERS) + 1));
+                                world.playSound(null, pos, TFCSounds.CHARCOAL_PILE.getPlaceSound(), SoundCategory.BLOCKS, 1.0f, 1.0f);
+                            }
+                            return true;
+                        }
                     }
-                }
-                if (facing == EnumFacing.UP && world.getBlockState(pos).isNormalCube() && world.getBlockState(pos.up()).getBlock().isReplaceable(world, pos.up()))
-                {
-                    // Create a new charcoal pile
-                    if (!world.isRemote)
+                    BlockPos posAt = pos;
+                    if (!state.getBlock().isReplaceable(world, pos))
                     {
-                        world.setBlockState(pos.up(), BlocksTFC.CHARCOAL_PILE.getDefaultState());
-                        world.playSound(null, pos.up(), SoundEvents.BLOCK_GRAVEL_PLACE, SoundCategory.BLOCKS, 1.0f, 0.5f);
-                        return true;
+                        posAt = posAt.offset(facing);
+                    }
+                    if (world.getBlockState(posAt.down()).isSideSolid(world, posAt.down(), EnumFacing.UP) && world.getBlockState(posAt).getBlock().isReplaceable(world, pos))
+                    {
+                        IBlockState stateToPlace = BlocksTFC.CHARCOAL_PILE.getDefaultState().withProperty(LAYERS, 1);
+                        if (world.checkNoEntityCollision(stateToPlace.getBoundingBox(world, posAt).offset(posAt)))
+                        {
+                            // Create a new charcoal pile
+                            if (!world.isRemote)
+                            {
+                                world.setBlockState(posAt, stateToPlace);
+                                world.playSound(null, posAt, TFCSounds.CHARCOAL_PILE.getPlaceSound(), SoundCategory.BLOCKS, 1.0f, 1.0f);
+                            }
+                            return true;
+                        }
                     }
                 }
                 return false;
@@ -95,67 +112,52 @@ public interface IPlaceableItem
 
             // Logs -> Log Piles (placement + insertion)
             placeableInstances.put(stack -> OreDictionaryHelper.doesStackMatchOre(stack, "logWood"), (world, pos, stack, player, facing, hitVec) -> {
-                if (player.isSneaking())
+                if (facing != null)
                 {
-                    if (facing != null)
+                    IBlockState stateAt = world.getBlockState(pos);
+                    if (stateAt.getBlock() == BlocksTFC.LOG_PILE)
                     {
-                        if (world.getBlockState(pos).getBlock() == BlocksTFC.LOG_PILE)
+                        // Clicked on a log pile, so try to insert into the original
+                        TELogPile te = Helpers.getTE(world, pos, TELogPile.class);
+                        if (te != null)
                         {
-                            if (!world.isRemote)
+                            if (te.insertLog(stack.copy()))
                             {
-                                TELogPile te = Helpers.getTE(world, pos, TELogPile.class);
-                                if (te != null)
-                                {
-                                    if (te.insertLog(stack.copy()))
-                                    {
-                                        world.playSound(null, pos.offset(facing), SoundEvents.BLOCK_WOOD_PLACE, SoundCategory.BLOCKS, 1.0F, 1.0F);
-                                        return true;
-                                    }
-                                    else
-                                    {
-                                        // Insert log didn't work, see if trying to place another log pile
-                                        if (facing == EnumFacing.UP && te.countLogs() == 16 || (facing != EnumFacing.UP && world.getBlockState(pos.down().offset(facing)).isNormalCube()
-                                            && world.getBlockState(pos.offset(facing)).getBlock().isReplaceable(world, pos.offset(facing))))
-                                        {
-                                            world.setBlockState(pos.offset(facing), BlocksTFC.LOG_PILE.getStateForPlacement(world, pos, facing, 0, 0, 0, 0, player));
-
-                                            TELogPile te2 = Helpers.getTE(world, pos.offset(facing), TELogPile.class);
-                                            if (te2 != null)
-                                            {
-                                                te2.insertLog(stack.copy());
-                                            }
-
-                                            world.playSound(null, pos.offset(facing), SoundEvents.BLOCK_WOOD_PLACE, SoundCategory.BLOCKS, 1.0F, 1.0F);
-                                            return true;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (world.getBlockState(pos.down().offset(facing)).isNormalCube()
-                                && world.getBlockState(pos.offset(facing)).getBlock().isReplaceable(world, pos.offset(facing)) &&
-                                player.isSneaking())
-                            {
-                                // Place log pile
                                 if (!world.isRemote)
                                 {
-                                    world.setBlockState(pos.offset(facing), BlocksTFC.LOG_PILE.getStateForPlacement(world, pos, facing, 0, 0, 0, 0, player));
-
-                                    TELogPile te = Helpers.getTE(world, pos.offset(facing), TELogPile.class);
-                                    if (te != null)
-                                    {
-                                        te.insertLog(stack.copy());
-                                    }
-
                                     world.playSound(null, pos.offset(facing), SoundEvents.BLOCK_WOOD_PLACE, SoundCategory.BLOCKS, 1.0F, 1.0F);
-                                    return true;
                                 }
+                                return true;
                             }
                         }
                     }
-                    return true;
+
+                    // Try and place a log pile - if you were sneaking or you clicked on a log pile
+                    if (stateAt.getBlock() == BlocksTFC.LOG_PILE || player.isSneaking())
+                    {
+                        BlockPos posAt = pos;
+                        if (!stateAt.getBlock().isReplaceable(world, pos))
+                        {
+                            posAt = posAt.offset(facing);
+                        }
+                        if (world.getBlockState(posAt.down()).isNormalCube() && world.mayPlace(BlocksTFC.LOG_PILE, posAt, false, facing, null))
+                        {
+                            // Place log pile
+                            if (!world.isRemote)
+                            {
+                                world.setBlockState(posAt, BlocksTFC.LOG_PILE.getStateForPlacement(world, posAt, facing, 0, 0, 0, 0, player));
+
+                                TELogPile te = Helpers.getTE(world, posAt, TELogPile.class);
+                                if (te != null)
+                                {
+                                    te.insertLog(stack.copy());
+                                }
+
+                                world.playSound(null, posAt, SoundEvents.BLOCK_WOOD_PLACE, SoundCategory.BLOCKS, 1.0F, 1.0F);
+                            }
+                            return true;
+                        }
+                    }
                 }
                 return false;
             });

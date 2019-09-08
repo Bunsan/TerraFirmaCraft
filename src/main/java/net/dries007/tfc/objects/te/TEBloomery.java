@@ -26,16 +26,16 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants;
 
 import net.dries007.tfc.ConfigTFC;
+import net.dries007.tfc.api.capability.metal.CapabilityMetalItem;
+import net.dries007.tfc.api.capability.metal.IMetalItem;
 import net.dries007.tfc.api.types.Metal;
-import net.dries007.tfc.api.util.IMetalObject;
 import net.dries007.tfc.objects.blocks.BlockCharcoalPile;
 import net.dries007.tfc.objects.blocks.BlockMolten;
 import net.dries007.tfc.objects.blocks.BlocksTFC;
-import net.dries007.tfc.objects.items.metal.ItemOreTFC;
-import net.dries007.tfc.util.FuelManager;
 import net.dries007.tfc.util.Helpers;
+import net.dries007.tfc.util.fuel.FuelManager;
 
-import static net.dries007.tfc.util.ILightableBlock.LIT;
+import static net.dries007.tfc.objects.blocks.property.ILightableBlock.LIT;
 import static net.minecraft.block.BlockHorizontal.FACING;
 
 @ParametersAreNonnullByDefault
@@ -71,7 +71,7 @@ public class TEBloomery extends TEInventory implements ITickable
 
         fuelStacks.clear();
         NBTTagList fuels = tag.getTagList("fuels", Constants.NBT.TAG_COMPOUND);
-        for (int i = 0; i < ores.tagCount(); i++)
+        for (int i = 0; i < fuels.tagCount(); i++)
         {
             fuelStacks.add(new ItemStack(fuels.getCompoundTagAt(i)));
         }
@@ -94,7 +94,7 @@ public class TEBloomery extends TEInventory implements ITickable
         {
             fuels.appendTag(stack.serializeNBT());
         }
-        tag.setTag("fuels", ores);
+        tag.setTag("fuels", fuels);
         tag.setLong("burnTicksLeft", burnTicksLeft);
         return super.writeToNBT(tag);
     }
@@ -201,8 +201,11 @@ public class TEBloomery extends TEInventory implements ITickable
                 int totalOutput = 0;
                 for (ItemStack stack : oreStacks)
                 {
-                    IMetalObject metal = (IMetalObject) stack.getItem();
-                    totalOutput += metal.getSmeltAmount(stack);
+                    IMetalItem metal = CapabilityMetalItem.getMetalItem(stack);
+                    if (metal != null)
+                    {
+                        totalOutput += metal.getSmeltAmount(stack);
+                    }
                 }
 
                 oreStacks.clear();
@@ -262,14 +265,17 @@ public class TEBloomery extends TEInventory implements ITickable
                     }
                 }
             }
-            else if (stack.getItem() instanceof ItemOreTFC)
+            else
             {
-                ItemOreTFC metal = (ItemOreTFC) stack.getItem();
-                if (metal.getMetal(stack) == Metal.WROUGHT_IRON || metal.getMetal(stack) == Metal.PIG_IRON)
+                IMetalItem cap = CapabilityMetalItem.getMetalItem(stack);
+                if (cap != null && (cap.getMetal(stack) == Metal.WROUGHT_IRON || cap.getMetal(stack) == Metal.PIG_IRON))
                 {
+                    if (oreStacks.size() < maxOre)
+                    {
+                        markDirty();
+                    }
                     while (oreStacks.size() < maxOre)
                     {
-                        this.markDirty();
                         oreStacks.add(stack.splitStack(1));
                         if (stack.getCount() <= 0)
                         {

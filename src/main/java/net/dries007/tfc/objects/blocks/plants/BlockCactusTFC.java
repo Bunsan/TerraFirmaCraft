@@ -31,9 +31,8 @@ import net.minecraft.world.World;
 import net.dries007.tfc.api.capability.size.Size;
 import net.dries007.tfc.api.capability.size.Weight;
 import net.dries007.tfc.api.types.Plant;
-import net.dries007.tfc.util.ITallPlant;
-import net.dries007.tfc.world.classic.CalendarTFC;
-import net.dries007.tfc.world.classic.ClimateTFC;
+import net.dries007.tfc.objects.blocks.property.ITallPlant;
+import net.dries007.tfc.util.climate.ClimateTFC;
 import net.dries007.tfc.world.classic.chunkdata.ChunkDataTFC;
 
 @ParametersAreNonnullByDefault
@@ -75,7 +74,7 @@ public class BlockCactusTFC extends BlockPlantTFC implements IGrowable, ITallPla
     public void grow(World worldIn, Random rand, BlockPos pos, IBlockState state)
     {
         worldIn.setBlockState(pos.up(), this.getDefaultState());
-        IBlockState iblockstate = state.withProperty(DAYPERIOD, getDayPeriod()).withProperty(AGE, 0).withProperty(GROWTHSTAGE, plant.getStages()[CalendarTFC.getMonthOfYear().id()]).withProperty(PART, getPlantPart(worldIn, pos));
+        IBlockState iblockstate = state.withProperty(DAYPERIOD, getDayPeriod()).withProperty(AGE, 0).withProperty(growthStageProperty, plant.getStageForMonth()).withProperty(PART, getPlantPart(worldIn, pos));
         worldIn.setBlockState(pos, iblockstate);
         iblockstate.neighborChanged(worldIn, pos.up(), this, pos);
     }
@@ -142,7 +141,7 @@ public class BlockCactusTFC extends BlockPlantTFC implements IGrowable, ITallPla
     {
         if (!worldIn.isAreaLoaded(pos, 1)) return;
 
-        if (plant.isValidGrowthTemp(ClimateTFC.getHeightAdjustedTemp(worldIn, pos)) && plant.isValidSunlight(Math.subtractExact(worldIn.getLightFor(EnumSkyBlock.SKY, pos), worldIn.getSkylightSubtracted())))
+        if (plant.isValidGrowthTemp(ClimateTFC.getActualTemp(worldIn, pos)) && plant.isValidSunlight(Math.subtractExact(worldIn.getLightFor(EnumSkyBlock.SKY, pos), worldIn.getSkylightSubtracted())))
         {
             int j = state.getValue(AGE);
 
@@ -183,7 +182,7 @@ public class BlockCactusTFC extends BlockPlantTFC implements IGrowable, ITallPla
 
             return flag &&
                 soil.getBlock().canSustainPlant(soil, worldIn, pos.down(), net.minecraft.util.EnumFacing.UP, this) &&
-                plant.isValidTemp(ClimateTFC.getHeightAdjustedTemp(worldIn, pos)) &&
+                plant.isValidTemp(ClimateTFC.getActualTemp(worldIn, pos)) &&
                 plant.isValidRain(ChunkDataTFC.getRainfall(worldIn, pos));
         }
         return this.canSustainBush(soil);
@@ -200,7 +199,7 @@ public class BlockCactusTFC extends BlockPlantTFC implements IGrowable, ITallPla
     @Nonnull
     protected BlockStateContainer createPlantBlockState()
     {
-        return new BlockStateContainer(this, AGE, GROWTHSTAGE, PART, DAYPERIOD);
+        return new BlockStateContainer(this, AGE, growthStageProperty, PART, DAYPERIOD);
     }
 
     @Override

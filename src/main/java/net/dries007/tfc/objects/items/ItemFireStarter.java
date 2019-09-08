@@ -42,7 +42,7 @@ import net.dries007.tfc.objects.te.TEPitKiln;
 import net.dries007.tfc.util.Helpers;
 import net.dries007.tfc.util.OreDictionaryHelper;
 
-import static net.dries007.tfc.util.ILightableBlock.LIT;
+import static net.dries007.tfc.objects.blocks.property.ILightableBlock.LIT;
 
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
@@ -58,7 +58,7 @@ public class ItemFireStarter extends ItemTFC
         return item == ItemsTFC.FIRESTARTER || item == Items.FLINT_AND_STEEL || item == Items.FIRE_CHARGE || item instanceof ItemFlintAndSteel;
     }
 
-    ItemFireStarter()
+    public ItemFireStarter()
     {
         setMaxDamage(8);
         setMaxStackSize(1);
@@ -128,6 +128,7 @@ public class ItemFireStarter extends ItemTFC
         }
         else if (countLeft == 1) // Server, and last tick of use
         {
+            stack.damageItem(1, player);
             final IBlockState state = world.getBlockState(pos.down());
             if (state.getBlock() == BlocksTFC.LOG_PILE)
             {
@@ -161,24 +162,23 @@ public class ItemFireStarter extends ItemTFC
             else
             {
                 // Try to make a fire pit
-                stack.damageItem(1, player);
 
                 final List<EntityItem> items = world.getEntitiesWithinAABB(EntityItem.class, new AxisAlignedBB(pos, pos.add(1, 2, 1)));
                 final List<EntityItem> stuffToUse = new ArrayList<>();
 
-                int sticks = 3, kindling = 1;
+                int sticks = 0, kindling = 0;
                 EntityItem log = null;
 
                 for (EntityItem entity : items)
                 {
                     if (OreDictionaryHelper.doesStackMatchOre(entity.getItem(), "stickWood"))
                     {
-                        sticks -= entity.getItem().getCount();
+                        sticks += entity.getItem().getCount();
                         stuffToUse.add(entity);
                     }
                     else if (OreDictionaryHelper.doesStackMatchOre(entity.getItem(), "kindling"))
                     {
-                        kindling -= entity.getItem().getCount();
+                        kindling += entity.getItem().getCount();
                         stuffToUse.add(entity);
                     }
                     else if (log == null && OreDictionaryHelper.doesStackMatchOre(entity.getItem(), "logWood"))
@@ -187,9 +187,9 @@ public class ItemFireStarter extends ItemTFC
                     }
                 }
 
-                if (sticks <= 0 && kindling <= 0 && log != null)
+                if (sticks >= 3 && log != null)
                 {
-                    final float kindlingModifier = Math.min(-0.1f * (float) kindling, 0.5f);
+                    final float kindlingModifier = Math.min(0.1f * (float) kindling, 0.5f);
                     if (itemRand.nextFloat() < chance + kindlingModifier)
                     {
                         world.setBlockState(pos, BlocksTFC.FIREPIT.getDefaultState().withProperty(LIT, true));
@@ -230,6 +230,12 @@ public class ItemFireStarter extends ItemTFC
     public Weight getWeight(ItemStack stack)
     {
         return Weight.LIGHT;
+    }
+
+    @Override
+    public boolean canStack(@Nonnull ItemStack stack)
+    {
+        return false;
     }
 
     @Nullable

@@ -25,10 +25,11 @@ import net.dries007.tfc.api.capability.forge.CapabilityForgeable;
 import net.dries007.tfc.api.capability.forge.IForgeable;
 import net.dries007.tfc.api.capability.heat.CapabilityItemHeat;
 import net.dries007.tfc.api.capability.heat.IItemHeat;
-import net.dries007.tfc.api.recipes.AnvilRecipe;
 import net.dries007.tfc.api.recipes.WeldingRecipe;
+import net.dries007.tfc.api.recipes.anvil.AnvilRecipe;
 import net.dries007.tfc.api.registries.TFCRegistries;
 import net.dries007.tfc.api.types.Metal;
+import net.dries007.tfc.client.TFCSounds;
 import net.dries007.tfc.network.PacketAnvilUpdate;
 import net.dries007.tfc.objects.blocks.metal.BlockAnvilTFC;
 import net.dries007.tfc.objects.blocks.stone.BlockStoneAnvil;
@@ -151,29 +152,6 @@ public class TEAnvilTFC extends TEInventory
     }
 
     @Override
-    public int getSlotLimit(int slot)
-    {
-        return slot == SLOT_FLUX ? super.getSlotLimit(slot) : 1;
-    }
-
-    @Override
-    public boolean isItemValid(int slot, ItemStack stack)
-    {
-        switch (slot)
-        {
-            case SLOT_INPUT_1:
-            case SLOT_INPUT_2:
-                return stack.hasCapability(CapabilityForgeable.FORGEABLE_CAPABILITY, null) && stack.hasCapability(CapabilityItemHeat.ITEM_HEAT_CAPABILITY, null);
-            case SLOT_FLUX:
-                return OreDictionaryHelper.doesStackMatchOre(stack, "dustFlux");
-            case SLOT_HAMMER:
-                return OreDictionaryHelper.doesStackMatchOre(stack, "hammer");
-            default:
-                return false;
-        }
-    }
-
-    @Override
     public void readFromNBT(NBTTagCompound nbt)
     {
         String recipe = nbt.getString("recipe");
@@ -204,6 +182,29 @@ public class TEAnvilTFC extends TEInventory
         nbt.setInteger("work", this.workingProgress);
         nbt.setInteger("target", this.workingTarget);
         return super.writeToNBT(nbt);
+    }
+
+    @Override
+    public int getSlotLimit(int slot)
+    {
+        return slot == SLOT_FLUX ? super.getSlotLimit(slot) : 1;
+    }
+
+    @Override
+    public boolean isItemValid(int slot, ItemStack stack)
+    {
+        switch (slot)
+        {
+            case SLOT_INPUT_1:
+            case SLOT_INPUT_2:
+                return stack.hasCapability(CapabilityForgeable.FORGEABLE_CAPABILITY, null) && stack.hasCapability(CapabilityItemHeat.ITEM_HEAT_CAPABILITY, null);
+            case SLOT_FLUX:
+                return OreDictionaryHelper.doesStackMatchOre(stack, "dustFlux");
+            case SLOT_HAMMER:
+                return OreDictionaryHelper.doesStackMatchOre(stack, "hammer");
+            default:
+                return false;
+        }
     }
 
     /**
@@ -239,7 +240,7 @@ public class TEAnvilTFC extends TEInventory
                 steps = cap.getSteps().copy();
                 workingProgress += step.getStepAmount();
                 //The line below should be changed to a "HIT" sound, not 3 hits(minecraft default)
-                world.playSound(null, pos, SoundEvents.BLOCK_ANVIL_HIT, SoundCategory.PLAYERS, 1.0f, 1.0f);
+                world.playSound(null, pos, TFCSounds.ANVIL_IMPACT, SoundCategory.PLAYERS, 1.0f, 1.0f);
             }
 
             // Handle possible recipe completion
@@ -271,8 +272,7 @@ public class TEAnvilTFC extends TEInventory
 
                     }
 
-                    //Should we change this for a completed work sound effect?
-                    world.playSound(null, pos, SoundEvents.BLOCK_ANVIL_BREAK, SoundCategory.PLAYERS, 1.0f, 1.0f);
+                    world.playSound(null, pos, TFCSounds.ANVIL_IMPACT, SoundCategory.PLAYERS, 1.0f, 1.0f);
 
                     // Reset forge stuff
                     resetFields();
@@ -308,7 +308,7 @@ public class TEAnvilTFC extends TEInventory
         }
 
         // Find a matching welding recipe
-        WeldingRecipe recipe = TFCRegistries.WELDING.getValuesCollection().stream().filter(x -> x.matches(input1, input2)).findFirst().orElse(null);
+        WeldingRecipe recipe = WeldingRecipe.get(input1, input2, getTier());
         if (recipe != null)
         {
             ItemStack fluxStack = inventory.getStackInSlot(SLOT_FLUX);

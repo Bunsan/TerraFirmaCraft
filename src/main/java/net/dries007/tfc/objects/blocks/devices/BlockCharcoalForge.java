@@ -17,12 +17,15 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.AxisAlignedBB;
@@ -32,15 +35,14 @@ import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
+import net.dries007.tfc.api.util.IBellowsConsumerBlock;
 import net.dries007.tfc.client.TFCGuiHandler;
 import net.dries007.tfc.objects.blocks.BlocksTFC;
+import net.dries007.tfc.objects.blocks.property.ILightableBlock;
 import net.dries007.tfc.objects.items.ItemFireStarter;
 import net.dries007.tfc.objects.te.TEBellows;
 import net.dries007.tfc.objects.te.TECharcoalForge;
-import net.dries007.tfc.objects.te.TEInventory;
 import net.dries007.tfc.util.Helpers;
-import net.dries007.tfc.util.IBellowsConsumerBlock;
-import net.dries007.tfc.util.ILightableBlock;
 import net.dries007.tfc.util.Multiblock;
 
 @ParametersAreNonnullByDefault
@@ -52,8 +54,15 @@ public class BlockCharcoalForge extends Block implements IBellowsConsumerBlock, 
     static
     {
         BiPredicate<World, BlockPos> skyMatcher = World::canBlockSeeSky;
+        BiPredicate<World, BlockPos> stoneMatcher = (world, pos) ->
+        {
+            IBlockState state = world.getBlockState(pos);
+            return state.getMaterial() == Material.ROCK && state.isOpaqueCube() && state.isNormalCube();
+        };
         CHARCOAL_FORGE_MULTIBLOCK = new Multiblock()
+            // Top block
             .match(new BlockPos(0, 1, 0), state -> state.getBlock() == BlocksTFC.CRUCIBLE || state.getBlock() == Blocks.AIR)
+            // Chimney
             .matchOneOf(new BlockPos(0, 1, 0), new Multiblock()
                 .match(new BlockPos(0, 0, 0), skyMatcher)
                 .match(new BlockPos(0, 0, 1), skyMatcher)
@@ -64,32 +73,18 @@ public class BlockCharcoalForge extends Block implements IBellowsConsumerBlock, 
                 .match(new BlockPos(2, 0, 0), skyMatcher)
                 .match(new BlockPos(-1, 0, 0), skyMatcher)
                 .match(new BlockPos(-2, 0, 0), skyMatcher)
-            );
+            )
+            // Underneath
+            .match(new BlockPos(1, 0, 0), stoneMatcher)
+            .match(new BlockPos(-1, 0, 0), stoneMatcher)
+            .match(new BlockPos(0, 0, 1), stoneMatcher)
+            .match(new BlockPos(0, 0, -1), stoneMatcher)
+            .match(new BlockPos(0, -1, 0), stoneMatcher);
     }
 
-    public static boolean hasValidSideBlocks(World world, BlockPos pos)
+    public static boolean isValid(World world, BlockPos pos)
     {
-        for (EnumFacing face : EnumFacing.values())
-        {
-            IBlockState state = world.getBlockState(pos.offset(face));
-            if (face == EnumFacing.UP)
-            {
-                // The block on top must be non-solid
-                if (state.isNormalCube())
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                // Side blocks must be rock, opaque, and full blocks
-                if (state.getMaterial() != Material.ROCK || !state.isOpaqueCube() || !state.isFullBlock())
-                {
-                    return false;
-                }
-            }
-        }
-        return true;
+        return CHARCOAL_FORGE_MULTIBLOCK.test(world, pos);
     }
 
     public static boolean hasValidChimney(World world, BlockPos pos)
@@ -186,7 +181,7 @@ public class BlockCharcoalForge extends Block implements IBellowsConsumerBlock, 
     @Override
     public void updateTick(World worldIn, BlockPos pos, IBlockState state, Random rand)
     {
-        if (!hasValidChimney(worldIn, pos))
+        if (!isValid(worldIn, pos))
         {
             worldIn.setBlockState(pos, state.withProperty(LIT, false));
         }
@@ -198,12 +193,23 @@ public class BlockCharcoalForge extends Block implements IBellowsConsumerBlock, 
     {
         if (!worldIn.isRemote)
         {
-            if (state.getValue(LIT) && (!hasValidChimney(worldIn, pos) || !hasValidSideBlocks(worldIn, pos)))
+            if (state.getValue(LIT) && !isValid(worldIn, pos))
             {
                 // This is not a valid pit, therefor extinguish it
                 worldIn.setBlockState(pos, state.withProperty(LIT, false));
             }
         }
+    }
+
+    @Override
+    public void breakBlock(World worldIn, BlockPos pos, IBlockState state)
+    {
+        TECharcoalForge te = Helpers.getTE(worldIn, pos, TECharcoalForge.class);
+        if (te != null)
+        {
+            te.onBreakBlock(worldIn, pos);
+        }
+        super.breakBlock(worldIn, pos, state);
     }
 
     @Override
@@ -233,7 +239,7 @@ public class BlockCharcoalForge extends Block implements IBellowsConsumerBlock, 
             if (!state.getValue(LIT))
             {
                 ItemStack held = player.getHeldItem(hand);
-                if (ItemFireStarter.canIgnite(held))
+                if (ItemFireStarter.canIgnite(held) && isValid(world, pos))
                 {
                     world.setBlockState(pos, state.withProperty(LIT, true));
                     return true;
@@ -248,13 +254,14 @@ public class BlockCharcoalForge extends Block implements IBellowsConsumerBlock, 
     }
 
     @Override
-    public void harvestBlock(World worldIn, EntityPlayer player, BlockPos pos, IBlockState state, @Nullable TileEntity te, ItemStack stack)
+    public void onEntityWalk(World worldIn, BlockPos pos, Entity entityIn)
     {
-        if (!worldIn.isRemote && te instanceof TEInventory)
+        IBlockState state = worldIn.getBlockState(pos);
+        if (state.getValue(LIT) && !entityIn.isImmuneToFire() && entityIn instanceof EntityLivingBase && state.getValue(LIT))
         {
-            ((TEInventory) te).onBreakBlock(worldIn, pos);
+            entityIn.attackEntityFrom(DamageSource.IN_FIRE, 2.0F);
         }
-        super.harvestBlock(worldIn, player, pos, state, te, stack);
+        super.onEntityWalk(worldIn, pos, entityIn);
     }
 
     @Override
@@ -262,6 +269,12 @@ public class BlockCharcoalForge extends Block implements IBellowsConsumerBlock, 
     protected BlockStateContainer createBlockState()
     {
         return new BlockStateContainer(this, LIT);
+    }
+
+    @Override
+    public int getLightValue(IBlockState state, IBlockAccess world, BlockPos pos)
+    {
+        return state.getValue(LIT) ? 15 : 0;
     }
 
     @Override

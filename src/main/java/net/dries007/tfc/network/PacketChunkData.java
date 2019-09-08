@@ -16,7 +16,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 
 import io.netty.buffer.ByteBuf;
 import net.dries007.tfc.TerraFirmaCraft;
-import net.dries007.tfc.world.classic.ClimateRenderHelper;
+import net.dries007.tfc.util.climate.ClimateTFC;
 import net.dries007.tfc.world.classic.chunkdata.ChunkDataProvider;
 import net.dries007.tfc.world.classic.chunkdata.ChunkDataTFC;
 
@@ -24,20 +24,18 @@ public class PacketChunkData implements IMessage
 {
     private NBTTagCompound nbt;
     private int x, z;
-    private float temperature, rainfall;
+    private float regionalTemp, rainfall;
 
     @SuppressWarnings("unused")
-    public PacketChunkData()
-    {
+    @Deprecated
+    public PacketChunkData() {}
 
-    }
-
-    public PacketChunkData(ChunkPos chunkPos, NBTTagCompound nbt, float temperature, float rainfall)
+    public PacketChunkData(ChunkPos chunkPos, NBTTagCompound nbt, float regionalTemp, float rainfall)
     {
         this.x = chunkPos.x;
         this.z = chunkPos.z;
         this.nbt = nbt;
-        this.temperature = temperature;
+        this.regionalTemp = regionalTemp;
         this.rainfall = rainfall;
     }
 
@@ -47,7 +45,7 @@ public class PacketChunkData implements IMessage
         x = buf.readInt();
         z = buf.readInt();
         nbt = ByteBufUtils.readTag(buf);
-        temperature = buf.readFloat();
+        regionalTemp = buf.readFloat();
         rainfall = buf.readFloat();
     }
 
@@ -57,7 +55,7 @@ public class PacketChunkData implements IMessage
         buf.writeInt(x);
         buf.writeInt(z);
         ByteBufUtils.writeTag(buf, nbt);
-        buf.writeFloat(temperature);
+        buf.writeFloat(regionalTemp);
         buf.writeFloat(rainfall);
     }
 
@@ -78,8 +76,8 @@ public class PacketChunkData implements IMessage
                         ChunkDataProvider.CHUNK_DATA_CAPABILITY.readNBT(data, null, message.nbt);
                     }
 
-                    // Update rendering climate helper
-                    ClimateRenderHelper.update(chunk.getPos(), message.temperature, message.rainfall);
+                    // Update climate cache
+                    ClimateTFC.update(chunk.getPos(), message.regionalTemp, message.rainfall);
                 });
             }
             return null;

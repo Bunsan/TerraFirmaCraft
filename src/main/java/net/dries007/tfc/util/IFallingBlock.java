@@ -12,29 +12,40 @@ import net.minecraft.block.BlockFalling;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
+import net.dries007.tfc.objects.blocks.wood.BlockSupport;
 import net.dries007.tfc.objects.entity.EntityFallingBlockTFC;
 
 public interface IFallingBlock
 {
-    default boolean canFallThrough(IBlockState state)
+    default boolean canFallThrough(World world, BlockPos pos)
     {
-        return state.getMaterial().isReplaceable();
+        if (!world.isSideSolid(pos, EnumFacing.UP)) return true;
+        return world.getBlockState(pos).getMaterial().isReplaceable();
     }
 
-    // Can the block fall at a particular position; ignore horizontal falling
-    default boolean shouldFall(World world, BlockPos pos)
+    default boolean shouldFall(World world, BlockPos posToFallAt, BlockPos originalPos)
     {
-        return canFallThrough(world.getBlockState(pos.down()));
+        // Can the block fall at a particular position; ignore horizontal falling
+        return canFallThrough(world, posToFallAt.down()) && !BlockSupport.isBeingSupported(world, originalPos);
     }
 
     // Get the position that the block will fall from (allows for horizontal falling)
     @Nullable
     BlockPos getFallablePos(World world, BlockPos pos);
 
-    default void checkFalling(World worldIn, BlockPos pos, IBlockState state)
+    /**
+     * Check if this block gonna fall.
+     *
+     * @param worldIn the worldObj this block is in
+     * @param pos     the BlockPos this block is in
+     * @param state   this block state
+     * @return true if this block has falled, false otherwise
+     */
+    default boolean checkFalling(World worldIn, BlockPos pos, IBlockState state)
     {
         BlockPos pos1 = getFallablePos(worldIn, pos);
         if (pos1 != null)
@@ -52,11 +63,15 @@ public interface IFallingBlock
             {
                 worldIn.setBlockToAir(pos);
                 pos1 = pos1.down();
-                while (canFallThrough(worldIn.getBlockState(pos1)) && pos1.getY() > 0)
+                while (canFallThrough(worldIn, pos1) && pos1.getY() > 0)
+                {
                     pos1 = pos1.down();
+                }
                 if (pos1.getY() > 0) worldIn.setBlockState(pos1.up(), state); // Includes Forge's fix for data loss.
             }
+            return true;
         }
+        return false;
     }
 
     default Iterable<ItemStack> getDropsFromFall(World world, BlockPos pos, IBlockState state, @Nullable NBTTagCompound teData, int fallTime, float fallDistance)

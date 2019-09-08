@@ -6,6 +6,7 @@
 package net.dries007.tfc.objects.container;
 
 import javax.annotation.Nonnull;
+import javax.annotation.ParametersAreNonnullByDefault;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -14,15 +15,17 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
-import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.items.SlotItemHandler;
 
 import net.dries007.tfc.api.capability.IMoldHandler;
 import net.dries007.tfc.api.capability.heat.CapabilityItemHeat;
 import net.dries007.tfc.api.capability.heat.IItemHeat;
-import net.dries007.tfc.objects.inventory.slot.SlotFluidTransfer;
+import net.dries007.tfc.objects.inventory.capability.ISlotCallback;
+import net.dries007.tfc.objects.inventory.capability.ItemStackHandlerCallback;
 import net.dries007.tfc.util.Helpers;
 
-public class ContainerLiquidTransfer extends ContainerItemStack
+@ParametersAreNonnullByDefault
+public class ContainerLiquidTransfer extends ContainerItemStack implements ISlotCallback
 {
     private IItemHandlerModifiable inventory;
 
@@ -81,13 +84,25 @@ public class ContainerLiquidTransfer extends ContainerItemStack
     public boolean canInteractWith(@Nonnull EntityPlayer player)
     {
         IItemHeat heat = stack.getCapability(CapabilityItemHeat.ITEM_HEAT_CAPABILITY, null);
-        return heat != null && heat.isMolten();
+        return heat != null && heat.isMolten() && super.canInteractWith(player);
     }
 
     @Override
     protected void addContainerSlots()
     {
-        this.inventory = new ItemStackHandler(1);
-        addSlotToContainer(new SlotFluidTransfer(inventory, 0, 80, 34));
+        inventory = new ItemStackHandlerCallback(this, 1);
+        addSlotToContainer(new SlotItemHandler(inventory, 0, 80, 34));
+    }
+
+    @Override
+    public int getSlotLimit(int slot)
+    {
+        return 1;
+    }
+
+    @Override
+    public boolean isItemValid(int slot, @Nonnull ItemStack stack)
+    {
+        return stack.hasCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, null);
     }
 }

@@ -17,8 +17,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+import net.dries007.tfc.objects.te.ITileFields;
 import net.dries007.tfc.objects.te.TEInventory;
-import net.dries007.tfc.util.ITileFields;
 
 /**
  * This is the mother of all Container-with-a-Tile-Entity implementations
@@ -37,17 +37,17 @@ public abstract class ContainerTE<T extends TEInventory> extends ContainerSimple
 
     private int[] cachedFields;
 
-    ContainerTE(InventoryPlayer playerInv, T tile)
+    protected ContainerTE(InventoryPlayer playerInv, T tile)
     {
         this(playerInv, tile, false, 0);
     }
 
-    ContainerTE(InventoryPlayer playerInv, T tile, boolean shouldSyncCaps)
+    protected ContainerTE(InventoryPlayer playerInv, T tile, boolean shouldSyncCaps)
     {
         this(playerInv, tile, shouldSyncCaps, 0);
     }
 
-    ContainerTE(InventoryPlayer playerInv, T tile, boolean shouldSyncCaps, int yOffset)
+    protected ContainerTE(InventoryPlayer playerInv, T tile, boolean shouldSyncCaps, int yOffset)
     {
         this.tile = tile;
         this.player = playerInv.player;
@@ -108,7 +108,7 @@ public abstract class ContainerTE<T extends TEInventory> extends ContainerSimple
             {
                 return ItemStack.EMPTY;
             }
-            // This is already called in SlotTEInput (which should be used by the Container anyway)
+            // This is already called in SlotCallback (which should be used by the Container anyway)
             //tile.setAndUpdateSlots(index);
         }
         // Transfer into the container
@@ -137,6 +137,12 @@ public abstract class ContainerTE<T extends TEInventory> extends ContainerSimple
         }
         slot.onTake(player, stack);
         return stackCopy;
+    }
+
+    @Override
+    public boolean canInteractWith(EntityPlayer playerIn)
+    {
+        return tile.canInteractWith(player);
     }
 
     @Override

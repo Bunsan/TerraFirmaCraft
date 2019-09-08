@@ -10,6 +10,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.SoundType;
+import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
@@ -28,11 +29,19 @@ import net.dries007.tfc.util.OreDictionaryHelper;
 @ParametersAreNonnullByDefault
 public class BlockThatch extends Block
 {
-    BlockThatch(Material material)
+    public BlockThatch()
     {
-        super(material);
+        super(new Material(MapColor.FOLIAGE)
+        {
+            @Override
+            public boolean isOpaque()
+            {
+                return false;
+            }
+        });
         setSoundType(SoundType.PLANT);
         setHardness(0.6F);
+        setLightOpacity(255); //Blocks light
         OreDictionaryHelper.register(this, "thatch");
         OreDictionaryHelper.register(this, "block", "straw");
         Blocks.FIRE.setFireInfo(this, 60, 20);
@@ -60,6 +69,14 @@ public class BlockThatch extends Block
         return NULL_AABB;
     }
 
+    @SuppressWarnings("deprecation")
+    @Override
+    public boolean isOpaqueCube(IBlockState state)
+    {
+        // Return false in order to stop xray through blocks
+        return false;
+    }
+
     @SideOnly(Side.CLIENT)
     @Override
     @Nonnull
@@ -74,6 +91,11 @@ public class BlockThatch extends Block
         // Player will take damage when hitting thatch if fall is over 13 blocks, fall damage is then set to 0.
         entityIn.fall((entityIn.fallDistance - 10), 1.0F); // TODO: 17/4/18 balance fall damage reduction.
         entityIn.fallDistance = 0;
-        entityIn.setInWeb();
+
+        entityIn.motionX *= 0.1;
+        entityIn.motionZ *= 0.1;
+
+        // This makes the player way too slow
+        //entityIn.setInWeb();
     }
 }

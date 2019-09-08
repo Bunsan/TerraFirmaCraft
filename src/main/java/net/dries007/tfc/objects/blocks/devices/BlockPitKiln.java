@@ -14,6 +14,9 @@ import net.minecraft.block.properties.PropertyBool;
 import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.particle.ParticleManager;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.tileentity.TileEntity;
@@ -22,10 +25,15 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 import mcp.MethodsReturnNonnullByDefault;
+import net.dries007.tfc.objects.blocks.property.ILightableBlock;
 import net.dries007.tfc.objects.items.ItemsTFC;
 import net.dries007.tfc.objects.te.TEPitKiln;
 import net.dries007.tfc.util.Helpers;
@@ -34,10 +42,23 @@ import static net.dries007.tfc.objects.blocks.BlockPlacedItem.PLACED_ITEM_AABB;
 
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
-public class BlockPitKiln extends Block
+public class BlockPitKiln extends Block implements ILightableBlock
 {
     public static final PropertyBool FULL = PropertyBool.create("full");
-    public static final PropertyBool LIT = PropertyBool.create("lit");
+
+    private static final AxisAlignedBB[] AABB_LEVELS = new AxisAlignedBB[] {
+        PLACED_ITEM_AABB,
+        new AxisAlignedBB(0, 0, 0, 1, 0.0625, 1),
+        new AxisAlignedBB(0, 0, 0, 1, 0.125, 1),
+        new AxisAlignedBB(0, 0, 0, 1, 0.1875, 1),
+        new AxisAlignedBB(0, 0, 0, 1, 0.25, 1),
+        new AxisAlignedBB(0, 0, 0, 1, 0.3125, 1),
+        new AxisAlignedBB(0, 0, 0, 1, 0.375, 1),
+        new AxisAlignedBB(0, 0, 0, 1, 0.4375, 1),
+        new AxisAlignedBB(0, 0, 0, 1, 0.5, 1),
+        new AxisAlignedBB(0, 0, 0, 1, 0.75, 1),
+        FULL_BLOCK_AABB
+    };
 
     public BlockPitKiln()
     {
@@ -97,8 +118,21 @@ public class BlockPitKiln extends Block
     @SuppressWarnings("deprecation")
     public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos)
     {
-        // todo: depend on fill level?
-        return state.getActualState(source, pos).getValue(FULL) ? FULL_BLOCK_AABB : PLACED_ITEM_AABB;
+        TEPitKiln tile = Helpers.getTE(source, pos, TEPitKiln.class);
+        if (tile != null)
+        {
+            int height = tile.getStrawCount();
+            if (tile.getLogCount() > 4)
+            {
+                height = 10; // Full block
+            }
+            else if (tile.getLogCount() > 0)
+            {
+                height = 9; // 75% of block
+            }
+            return AABB_LEVELS[height];
+        }
+        return PLACED_ITEM_AABB;
     }
 
     @Override
@@ -140,7 +174,7 @@ public class BlockPitKiln extends Block
         {
             te.onBreakBlock(worldIn, pos);
         }
-        super.breakBlock(worldIn, pos, state); // todo: drop items
+        super.breakBlock(worldIn, pos, state);
     }
 
     @Override
@@ -207,5 +241,31 @@ public class BlockPitKiln extends Block
     public TileEntity createTileEntity(World world, IBlockState state)
     {
         return new TEPitKiln();
+    }
+
+    @Override
+    public boolean addLandingEffects(IBlockState state, WorldServer worldObj, BlockPos blockPosition, IBlockState iblockstate, EntityLivingBase entity, int numberOfParticles)
+    {
+        return true;
+    }
+
+    @Override
+    public boolean addRunningEffects(IBlockState state, World world, BlockPos pos, Entity entity)
+    {
+        return true;
+    }
+
+    @SideOnly(Side.CLIENT)
+    @Override
+    public boolean addHitEffects(IBlockState state, World worldObj, RayTraceResult target, ParticleManager manager)
+    {
+        return true;
+    }
+
+    @SideOnly(Side.CLIENT)
+    @Override
+    public boolean addDestroyEffects(World world, BlockPos pos, ParticleManager manager)
+    {
+        return true;
     }
 }

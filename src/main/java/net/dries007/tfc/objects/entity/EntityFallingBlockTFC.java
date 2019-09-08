@@ -20,7 +20,6 @@ import net.minecraft.network.datasync.DataParameter;
 import net.minecraft.network.datasync.DataSerializers;
 import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
@@ -137,13 +136,6 @@ public class EntityFallingBlockTFC extends Entity
         {
             final IBlockState current = world.getBlockState(pos);
 
-//                if (world.isAirBlock(new BlockPos(posX, posY - 0.009999999776482582D, posZ))) // todo: is a forge fix, what does it do?
-            if (falling.canFallThrough(world.getBlockState(new BlockPos(posX, posY - 0.009999999776482582D, posZ))))
-            {
-                onGround = false;
-                return;
-            }
-
             motionX *= 0.699999988079071D;
             motionZ *= 0.699999988079071D;
             motionY *= -0.5D;
@@ -152,8 +144,12 @@ public class EntityFallingBlockTFC extends Entity
 
             setDead();
 
-            if (world.mayPlace(block, pos, true, EnumFacing.UP, null) && !falling.canFallThrough(world.getBlockState(pos.add(0, -1, 0))) && world.setBlockState(pos, state, 3))
+            //world.mayPlace(block, pos, true, EnumFacing.UP, null) &&
+            if (!falling.canFallThrough(world, pos.down()))
             {
+                world.destroyBlock(pos, true);
+                world.setBlockState(pos, state, 3);
+
                 falling.onEndFalling(world, pos, state, current);
 
                 // Copy all TE data over default data (except pos[X,Y,Z]) if the TE is there. This is vanilla code.
@@ -166,7 +162,9 @@ public class EntityFallingBlockTFC extends Entity
                         for (String s : teData.getKeySet())
                         {
                             if (!"x".equals(s) && !"y".equals(s) && !"z".equals(s))
+                            {
                                 currentTeData.setTag(s, teData.getTag(s).copy());
+                            }
                         }
                         te.readFromNBT(currentTeData);
                         te.markDirty();

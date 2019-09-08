@@ -18,10 +18,11 @@ import net.minecraft.world.gen.structure.template.TemplateManager;
 import net.dries007.tfc.TerraFirmaCraft;
 import net.dries007.tfc.api.types.Tree;
 import net.dries007.tfc.api.util.ITreeGenerator;
+import net.dries007.tfc.world.classic.StructureHelper;
 
 public class TreeGenVariants implements ITreeGenerator
 {
-    private static final PlacementSettings settings = ITreeGenerator.getDefaultSettings();
+    private static final PlacementSettings settings = StructureHelper.getDefaultSettings();
     private final String[] variants;
     private final boolean useRotation;
 
@@ -50,7 +51,7 @@ public class TreeGenVariants implements ITreeGenerator
     }
 
     @Override
-    public void generateTree(TemplateManager manager, World world, BlockPos pos, Tree tree, Random rand)
+    public void generateTree(TemplateManager manager, World world, BlockPos pos, Tree tree, Random rand, boolean isWorldGen)
     {
         String variant = variants[variants.length == 1 ? 0 : rand.nextInt(variants.length)];
         ResourceLocation base = new ResourceLocation(tree.getRegistryName() + "/" + variant);
@@ -62,11 +63,11 @@ public class TreeGenVariants implements ITreeGenerator
             return;
         }
 
-        PlacementSettings settings2 = useRotation ? ITreeGenerator.getRandomSettings(rand) : settings;
+        PlacementSettings settings2 = useRotation ? StructureHelper.getRandomSettings(rand) : settings;
 
         BlockPos size = structureBase.getSize().rotate(settings2.getRotation());
         // Begin rotation things
         pos = pos.add(-size.getX() / 2, 0, -size.getZ() / 2);
-        ITreeGenerator.addStructureToWorld(world, pos, structureBase, settings2);
+        StructureHelper.addStructureToWorld(world, pos, structureBase, settings2);
     }
 }

@@ -28,15 +28,19 @@ import net.dries007.tfc.ConfigTFC;
 import net.dries007.tfc.TerraFirmaCraft;
 import net.dries007.tfc.api.capability.heat.CapabilityItemHeat;
 import net.dries007.tfc.api.capability.heat.IItemHeat;
+import net.dries007.tfc.api.capability.metal.CapabilityMetalItem;
+import net.dries007.tfc.api.capability.metal.IMetalItem;
 import net.dries007.tfc.api.types.Metal;
-import net.dries007.tfc.api.util.IMetalObject;
+import net.dries007.tfc.api.util.IHeatConsumerBlock;
 import net.dries007.tfc.objects.blocks.BlockMolten;
 import net.dries007.tfc.objects.blocks.BlocksTFC;
-import net.dries007.tfc.objects.items.metal.ItemOreTFC;
-import net.dries007.tfc.util.*;
+import net.dries007.tfc.util.Helpers;
+import net.dries007.tfc.util.OreDictionaryHelper;
+import net.dries007.tfc.util.fuel.Fuel;
+import net.dries007.tfc.util.fuel.FuelManager;
 
 import static net.dries007.tfc.api.capability.heat.CapabilityItemHeat.MAX_TEMPERATURE;
-import static net.dries007.tfc.util.ILightableBlock.LIT;
+import static net.dries007.tfc.objects.blocks.property.ILightableBlock.LIT;
 
 @ParametersAreNonnullByDefault
 public class TEBlastFurnace extends TEInventory implements ITickable, ITileFields
@@ -236,9 +240,10 @@ public class TEBlastFurnace extends TEInventory implements ITickable, ITileField
 
                 oreCount = oreStacks.size();
                 oreUnits = oreStacks.stream().mapToInt(stack -> {
-                    if (stack.getItem() instanceof IMetalObject)
+                    IMetalItem metalObject = CapabilityMetalItem.getMetalItem(stack);
+                    if (metalObject != null)
                     {
-                        return ((IMetalObject) stack.getItem()).getSmeltAmount(stack);
+                        return metalObject.getSmeltAmount(stack);
                     }
                     return 1;
                 }).sum();
@@ -368,10 +373,10 @@ public class TEBlastFurnace extends TEInventory implements ITickable, ITileField
      */
     private void convertToMolten(ItemStack stack)
     {
-        if (!stack.isEmpty() && stack.getItem() instanceof IMetalObject)
+        IMetalItem metalObject = CapabilityMetalItem.getMetalItem(stack);
+        if (metalObject != null)
         {
-            IMetalObject metal = (IMetalObject) stack.getItem();
-            meltAmount += metal.getSmeltAmount(stack);
+            meltAmount += metalObject.getSmeltAmount(stack);
         }
     }
 
@@ -381,6 +386,7 @@ public class TEBlastFurnace extends TEInventory implements ITickable, ITileField
         for (EntityItem entityItem : world.getEntitiesWithinAABB(EntityItem.class, new AxisAlignedBB(pos.up(), pos.up().add(1, 5, 1)), EntitySelectors.IS_ALIVE))
         {
             ItemStack stack = entityItem.getItem();
+            IMetalItem metalObject = CapabilityMetalItem.getMetalItem(stack);
             if (FuelManager.isItemFuel(stack))
             {
                 // Add fuel
@@ -395,10 +401,10 @@ public class TEBlastFurnace extends TEInventory implements ITickable, ITileField
                     }
                 }
             }
-            else if (stack.getItem() instanceof ItemOreTFC)
+            else if (metalObject != null)
             {
-                ItemOreTFC metal = (ItemOreTFC) stack.getItem();
-                if (metal.getMetal(stack) == Metal.WROUGHT_IRON || metal.getMetal(stack) == Metal.PIG_IRON)
+                Metal metal = metalObject.getMetal(stack);
+                if (metal == Metal.WROUGHT_IRON || metal == Metal.PIG_IRON)
                 {
                     oreEntity = entityItem;
                 }
@@ -408,7 +414,8 @@ public class TEBlastFurnace extends TEInventory implements ITickable, ITileField
                 fluxEntity = entityItem;
             }
         }
-        //Add each ore consuming flux
+
+        // Add each ore consuming flux
         while (maxOre > oreStacks.size())
         {
             if (fluxEntity == null || oreEntity == null)

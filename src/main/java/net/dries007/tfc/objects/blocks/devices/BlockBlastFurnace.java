@@ -25,16 +25,17 @@ import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
 
 import net.dries007.tfc.api.types.Metal;
+import net.dries007.tfc.api.util.IBellowsConsumerBlock;
 import net.dries007.tfc.client.TFCGuiHandler;
+import net.dries007.tfc.objects.blocks.BlockFireBrick;
 import net.dries007.tfc.objects.blocks.BlocksTFC;
 import net.dries007.tfc.objects.blocks.metal.BlockMetalSheet;
+import net.dries007.tfc.objects.blocks.property.ILightableBlock;
 import net.dries007.tfc.objects.items.ItemFireStarter;
 import net.dries007.tfc.objects.te.TEBellows;
 import net.dries007.tfc.objects.te.TEBlastFurnace;
 import net.dries007.tfc.objects.te.TEMetalSheet;
 import net.dries007.tfc.util.Helpers;
-import net.dries007.tfc.util.IBellowsConsumerBlock;
-import net.dries007.tfc.util.ILightableBlock;
 import net.dries007.tfc.util.Multiblock;
 
 @ParametersAreNonnullByDefault
@@ -44,8 +45,7 @@ public class BlockBlastFurnace extends Block implements IBellowsConsumerBlock, I
 
     static
     {
-        //TODO Update when firebricks are added
-        Predicate<IBlockState> stoneMatcher = state -> state.getMaterial() == Material.ROCK && state.isNormalCube();
+        Predicate<IBlockState> stoneMatcher = state -> state.getBlock() instanceof BlockFireBrick;
         Predicate<IBlockState> ironSheetMatcher = state -> (state.getBlock() instanceof BlockMetalSheet)
             && ((BlockMetalSheet) state.getBlock()).getMetal() == Metal.WROUGHT_IRON;
         BLAST_FURNACE_CHIMNEY = new Multiblock()

@@ -13,7 +13,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import net.minecraft.block.Block;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyBool;
+import net.minecraft.block.properties.PropertyEnum;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
@@ -34,16 +34,16 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import mcp.MethodsReturnNonnullByDefault;
 import net.dries007.tfc.client.TFCGuiHandler;
 import net.dries007.tfc.objects.blocks.BlocksTFC;
+import net.dries007.tfc.objects.blocks.property.ILightableBlock;
 import net.dries007.tfc.objects.te.TEInventory;
 import net.dries007.tfc.objects.te.TELogPile;
 import net.dries007.tfc.util.Helpers;
-import net.dries007.tfc.util.ILightableBlock;
 
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
 public class BlockLogPile extends Block implements ILightableBlock
 {
-    private static final PropertyBool AXIS = PropertyBool.create("axis");
+    private static final PropertyEnum<EnumFacing.Axis> AXIS = PropertyEnum.create("axis", EnumFacing.Axis.class, EnumFacing.Axis.X, EnumFacing.Axis.Z);
 
     public BlockLogPile()
     {
@@ -53,20 +53,20 @@ public class BlockLogPile extends Block implements ILightableBlock
         setSoundType(SoundType.WOOD);
         setTickRandomly(true);
         setHarvestLevel("axe", 0);
-        this.setDefaultState(this.getDefaultState().withProperty(AXIS, false).withProperty(LIT, false));
+        this.setDefaultState(this.getDefaultState().withProperty(AXIS, EnumFacing.Axis.X).withProperty(LIT, false));
     }
 
     @Override
     @SuppressWarnings("deprecation")
     public IBlockState getStateFromMeta(int meta)
     {
-        return this.getDefaultState().withProperty(AXIS, meta == 0).withProperty(LIT, meta >= 2);
+        return this.getDefaultState().withProperty(AXIS, meta == 0 ? EnumFacing.Axis.Z : EnumFacing.Axis.X).withProperty(LIT, meta >= 2);
     }
 
     @Override
     public int getMetaFromState(IBlockState state)
     {
-        return (state.getValue(AXIS) ? 0 : 1) + (state.getValue(LIT) ? 2 : 0);
+        return (state.getValue(AXIS) == EnumFacing.Axis.Z ? 0 : 1) + (state.getValue(LIT) ? 2 : 0);
     }
 
     @Override
@@ -108,6 +108,17 @@ public class BlockLogPile extends Block implements ILightableBlock
     }
 
     @Override
+    public void harvestBlock(World worldIn, EntityPlayer player, BlockPos pos, IBlockState state, @Nullable TileEntity te, ItemStack stack)
+    {
+        // This can't use breakBlock as it needs to not drop when broken in order to create a charcoal pile
+        if (!worldIn.isRemote && te instanceof TEInventory)
+        {
+            ((TEInventory) te).onBreakBlock(worldIn, pos);
+        }
+        super.breakBlock(worldIn, pos, state);
+    }
+
+    @Override
     public boolean onBlockActivated(World world, BlockPos pos, IBlockState state, EntityPlayer player, EnumHand hand, EnumFacing side, float hitX, float hitY, float hitZ)
     {
         TELogPile te = Helpers.getTE(world, pos, TELogPile.class);
@@ -139,8 +150,9 @@ public class BlockLogPile extends Block implements ILightableBlock
                 if (!world.isRemote)
                 {
                     TFCGuiHandler.openGui(world, pos, player, TFCGuiHandler.Type.LOG_PILE);
-                    return true;
+
                 }
+                return true;
             }
         }
         return false;
@@ -150,27 +162,29 @@ public class BlockLogPile extends Block implements ILightableBlock
     @SuppressWarnings("deprecation")
     public IBlockState getStateForPlacement(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
     {
-        if (placer.getHorizontalFacing().getAxis() == EnumFacing.Axis.Z)
+        if (placer.getHorizontalFacing().getAxis().isHorizontal())
         {
-            return this.getDefaultState().withProperty(AXIS, true);
+            return this.getDefaultState().withProperty(AXIS, placer.getHorizontalFacing().getAxis());
         }
         return this.getDefaultState();
-    }
-
-    @Override
-    public void harvestBlock(World worldIn, EntityPlayer player, BlockPos pos, IBlockState state, @Nullable TileEntity te, ItemStack stack)
-    {
-        if (!worldIn.isRemote && te instanceof TEInventory)
-        {
-            ((TEInventory) te).onBreakBlock(worldIn, pos);
-        }
-        super.harvestBlock(worldIn, player, pos, state, te, stack);
     }
 
     @Override
     protected BlockStateContainer createBlockState()
     {
         return new BlockStateContainer(this, AXIS, LIT);
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public boolean isSideSolid(IBlockState state, IBlockAccess world, BlockPos pos, EnumFacing side)
+    {
+        TELogPile tile = Helpers.getTE(world, pos, TELogPile.class);
+        if (tile != null)
+        {
+            return side == EnumFacing.DOWN || tile.countLogs() == 16;
+        }
+        return super.isSideSolid(state, world, pos, side);
     }
 
     @Override

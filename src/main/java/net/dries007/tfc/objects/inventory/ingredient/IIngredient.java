@@ -11,6 +11,7 @@ import javax.annotation.Nonnull;
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.NonNullList;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.oredict.OreDictionary;
@@ -24,6 +25,14 @@ import net.minecraftforge.oredict.OreDictionary;
  */
 public interface IIngredient<T> extends Predicate<T>
 {
+    IIngredient<?> EMPTY = input -> false;
+
+    @SuppressWarnings("unchecked")
+    static <P> IIngredient<P> empty()
+    {
+        return (IIngredient<P>) EMPTY;
+    }
+
     static IIngredient<ItemStack> of(@Nonnull Block predicateBlock)
     {
         return new IngredientItemStack(new ItemStack(predicateBlock, 1, OreDictionary.WILDCARD_VALUE));
@@ -32,6 +41,11 @@ public interface IIngredient<T> extends Predicate<T>
     static IIngredient<ItemStack> of(@Nonnull Item predicateItem)
     {
         return new IngredientItemStack(new ItemStack(predicateItem, 1, OreDictionary.WILDCARD_VALUE));
+    }
+
+    static IIngredient<ItemStack> of(@Nonnull Item predicateItem, int amount)
+    {
+        return new IngredientItemStack(new ItemStack(predicateItem, amount, OreDictionary.WILDCARD_VALUE));
     }
 
     static IIngredient<ItemStack> of(@Nonnull ItemStack predicateStack)
@@ -62,6 +76,17 @@ public interface IIngredient<T> extends Predicate<T>
     static IIngredient<FluidStack> of(int amount, @Nonnull Fluid... fluids)
     {
         return new IngredientMultipleFluidStack(amount, fluids);
+    }
+
+
+    /**
+     * This is used by JEI-CT hooks, return a valid list of inputs for this IIngredient
+     *
+     * @return NonNullList containing valid ingredients(fluidstack/itemstack) for this IIngredient
+     */
+    default NonNullList<T> getValidIngredients()
+    {
+        return NonNullList.create();
     }
 
     /**

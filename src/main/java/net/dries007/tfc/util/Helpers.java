@@ -5,16 +5,14 @@
 
 package net.dries007.tfc.util;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.google.common.base.Joiner;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -22,91 +20,130 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.EnumSkyBlock;
+import net.minecraft.util.math.*;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 
 import io.netty.buffer.ByteBuf;
 import net.dries007.tfc.Constants;
-import net.dries007.tfc.api.registries.TFCRegistries;
-import net.dries007.tfc.api.types.Plant;
-import net.dries007.tfc.api.types.Rock;
+import net.dries007.tfc.api.types.Ore;
 import net.dries007.tfc.api.util.TFCConstants;
-import net.dries007.tfc.objects.blocks.BlockPeat;
-import net.dries007.tfc.objects.blocks.BlocksTFC;
-import net.dries007.tfc.objects.blocks.plants.BlockShortGrassTFC;
-import net.dries007.tfc.objects.blocks.stone.BlockRockVariant;
-import net.dries007.tfc.world.classic.ClimateTFC;
+import net.dries007.tfc.objects.entity.EntitySeatOn;
 import net.dries007.tfc.world.classic.chunkdata.ChunkDataTFC;
 
 public final class Helpers
 {
     private static final Joiner JOINER_DOT = Joiner.on('.');
 
-    public static void spreadGrass(World world, BlockPos pos, IBlockState us, Random rand)
+    /**
+     * Gets a map of generated ores for each chunk in radius.
+     * It takes account only loaded chunks, so if radius is too big you probably won't get an accurate data.
+     *
+     * @param world  the WorldObj
+     * @param chunkX the center chunk's X position
+     * @param chunkZ the center chunk's Z position
+     * @param radius the radius to scan. can be 0 to scan only the central chunk
+     * @return a map containing all ores generated for each chunk
+     */
+    public static Map<ChunkPos, Set<Ore>> getChunkOres(World world, int chunkX, int chunkZ, int radius)
     {
-        if (world.getLightFromNeighbors(pos.up()) < 4 && world.getBlockState(pos.up()).getLightOpacity(world, pos.up()) > 2)
+        Map<ChunkPos, Set<Ore>> map = new HashMap<>();
+        for (int x = chunkX - radius; x <= chunkX + radius; x++)
         {
-            if (us.getBlock() instanceof BlockPeat)
+            for (int z = chunkZ - radius; z <= chunkZ + radius; z++)
             {
-                world.setBlockState(pos, BlocksTFC.PEAT.getDefaultState());
-            }
-            else if (us.getBlock() instanceof BlockRockVariant)
-            {
-                BlockRockVariant block = ((BlockRockVariant) us.getBlock());
-                world.setBlockState(pos, block.getVariant(block.getType().getNonGrassVersion()).getDefaultState());
-            }
-        }
-        else
-        {
-            if (world.getLightFromNeighbors(pos.up()) < 9) return;
-
-            for (int i = 0; i < 4; ++i)
-            {
-                BlockPos target = pos.add(rand.nextInt(3) - 1, rand.nextInt(5) - 3, rand.nextInt(3) - 1);
-                if (world.isOutsideBuildHeight(target) || !world.isBlockLoaded(target)) return;
-                BlockPos up = target.add(0, 1, 0);
-
-                IBlockState current = world.getBlockState(target);
-                if (!BlocksTFC.isSoil(current) || BlocksTFC.isGrass(current)) continue;
-                if (world.getLightFromNeighbors(up) < 4 || world.getBlockState(up).getLightOpacity(world, up) > 3)
-                    continue;
-
-                if (current.getBlock() instanceof BlockPeat)
+                ChunkPos chunkPos = new ChunkPos(x, z);
+                if (world.isBlockLoaded(chunkPos.getBlock(8, 0, 8)))
                 {
-                    world.setBlockState(target, BlocksTFC.PEAT_GRASS.getDefaultState());
-                }
-                else if (current.getBlock() instanceof BlockRockVariant)
-                {
-                    Rock.Type spreader = Rock.Type.GRASS;
-                    if ((us.getBlock() instanceof BlockRockVariant) && ((BlockRockVariant) us.getBlock()).getType() == Rock.Type.DRY_GRASS)
-                        spreader = Rock.Type.DRY_GRASS;
-
-                    BlockRockVariant block = ((BlockRockVariant) current.getBlock());
-                    world.setBlockState(target, block.getVariant(block.getType().getGrassVersion(spreader)).getDefaultState());
-                }
-            }
-
-            for (Plant plant : TFCRegistries.PLANTS.getValuesCollection())
-            {
-                if (plant.getPlantType() == Plant.PlantType.SHORT_GRASS && rand.nextFloat() < 0.5f)
-                {
-                    float temp = ClimateTFC.getHeightAdjustedTemp(world, pos.up());
-                    BlockShortGrassTFC plantBlock = BlockShortGrassTFC.get(plant);
-
-                    if (world.isAirBlock(pos.up()) &&
-                        plant.isValidLocation(temp, ChunkDataTFC.getRainfall(world, pos.up()), Math.subtractExact(world.getLightFor(EnumSkyBlock.SKY, pos.up()), world.getSkylightSubtracted())) &&
-                        plant.isValidGrowthTemp(temp) &&
-                        rand.nextDouble() < plantBlock.getGrowthRate(world, pos.up()))
-                    {
-                        world.setBlockState(pos.up(), plantBlock.getDefaultState());
-                    }
+                    Chunk chunk = world.getChunk(x, z);
+                    ChunkDataTFC chunkData = ChunkDataTFC.get(chunk);
+                    map.put(chunkPos, chunkData.getChunkOres());
                 }
             }
         }
+        return map;
+    }
+
+    /**
+     * Makes an entity sit on a block
+     *
+     * @param world    the worldObj
+     * @param pos      the BlockPos of the block to sit on
+     * @param creature the entityLiving that will sit on this block
+     * @param yOffset  the y offset of the top facing
+     */
+    public static void sitOnBlock(World world, BlockPos pos, EntityLiving creature, double yOffset)
+    {
+        if (!world.isRemote && !world.getBlockState(pos).getMaterial().isReplaceable())
+        {
+            EntitySeatOn seat = new EntitySeatOn(world, pos, yOffset);
+            world.spawnEntity(seat);
+            creature.startRiding(seat);
+        }
+    }
+
+    /**
+     * Returns the entity which is sitting on this BlockPos.
+     *
+     * @param world the WorldObj
+     * @param pos   the BlockPos of this block
+     * @return the entity which is sitting on this block, or null if none
+     */
+    @Nullable
+    public static Entity getSittingEntity(World world, BlockPos pos)
+    {
+        if (!world.isRemote)
+        {
+            List<EntitySeatOn> seats = world.getEntitiesWithinAABB(EntitySeatOn.class, new AxisAlignedBB(pos).grow(1D));
+            for (EntitySeatOn seat : seats)
+            {
+                if (seat.getPos().equals(pos))
+                {
+                    return seat.getSittingEntity();
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Copy from Item#rayTrace
+     * Returns a RayTraceResult containing first found block in Players reach.
+     *
+     * @param worldIn    the world obj player stands in.
+     * @param playerIn   the player obj
+     * @param useLiquids do fluids counts as block?
+     */
+    @Nullable
+    public static RayTraceResult rayTrace(World worldIn, EntityPlayer playerIn, boolean useLiquids)
+    {
+        Vec3d playerVec = new Vec3d(playerIn.posX, playerIn.posY + playerIn.getEyeHeight(), playerIn.posZ);
+        float cosYaw = MathHelper.cos(-playerIn.rotationYaw * 0.017453292F - (float) Math.PI);
+        float sinYaw = MathHelper.sin(-playerIn.rotationYaw * 0.017453292F - (float) Math.PI);
+        float cosPitch = -MathHelper.cos(-playerIn.rotationPitch * 0.017453292F);
+        float sinPitch = MathHelper.sin(-playerIn.rotationPitch * 0.017453292F);
+        double reachDistance = playerIn.getEntityAttribute(EntityPlayer.REACH_DISTANCE).getAttributeValue();
+        Vec3d targetVec = playerVec.add((sinYaw * cosPitch) * reachDistance, sinPitch * reachDistance, (cosYaw * cosPitch) * reachDistance);
+        return worldIn.rayTraceBlocks(playerVec, targetVec, useLiquids, !useLiquids, false);
+    }
+
+    /**
+     * Copied from {@link net.minecraft.entity.Entity#rayTrace(double, float)} as it is client only
+     *
+     * @param blockReachDistance the reach distance
+     * @param partialTicks       idk
+     * @return the ray trace result
+     */
+    @Nullable
+    public static RayTraceResult rayTrace(Entity entity, double blockReachDistance, float partialTicks)
+    {
+        Vec3d eyePosition = entity.getPositionEyes(partialTicks);
+        Vec3d lookVector = entity.getLook(partialTicks);
+        Vec3d rayTraceVector = eyePosition.add(lookVector.x * blockReachDistance, lookVector.y * blockReachDistance, lookVector.z * blockReachDistance);
+        return entity.world.rayTraceBlocks(eyePosition, rayTraceVector, false, false, true);
     }
 
     public static boolean containsAnyOfCaseInsensitive(Collection<String> input, String... items)

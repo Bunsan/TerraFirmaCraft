@@ -5,13 +5,13 @@
 
 package net.dries007.tfc.world.classic.worldgen;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.Biome;
@@ -34,6 +34,28 @@ public class WorldGenTrees implements IWorldGenerator
 {
     private static final ITreeGenerator GEN_BUSHES = new TreeGenBushes();
 
+    public static void generateLooseSticks(Random rand, int chunkX, int chunkZ, World world, int amount)
+    {
+        for (int i = 0; i < amount; i++)
+        {
+            final int x = chunkX * 16 + rand.nextInt(16) + 8;
+            final int z = chunkZ * 16 + rand.nextInt(16) + 8;
+            final BlockPos pos = world.getTopSolidOrLiquidBlock(new BlockPos(x, 0, z));
+
+            // Use air, so it doesn't replace other replaceable world gen
+            // This matches the check in BlockPlacedItemFlat for if the block can stay
+            if (world.isAirBlock(pos) && world.getBlockState(pos.down()).isSideSolid(world, pos.down(), EnumFacing.UP))
+            {
+                world.setBlockState(pos, BlocksTFC.PLACED_ITEM_FLAT.getDefaultState());
+                TEPlacedItemFlat tile = (TEPlacedItemFlat) world.getTileEntity(pos);
+                if (tile != null)
+                {
+                    tile.setStack(new ItemStack(Items.STICK));
+                }
+            }
+        }
+    }
+
     @Override
     public void generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator chunkGenerator, IChunkProvider chunkProvider)
     {
@@ -44,7 +66,7 @@ public class WorldGenTrees implements IWorldGenerator
         if (!chunkData.isInitialized()) return;
 
         final Biome b = world.getBiome(chunkBlockPos);
-        if (!(b instanceof BiomeTFC) || b == BiomesTFC.OCEAN || b == BiomesTFC.DEEP_OCEAN || b == BiomesTFC.LAKE || b == BiomesTFC.RIVER)
+        if (!(b instanceof BiomeTFC) || b == BiomesTFC.OCEAN || b == BiomesTFC.DEEP_OCEAN)
             return;
 
         final TemplateManager manager = ((WorldServer) world).getStructureTemplateManager();
@@ -73,23 +95,31 @@ public class WorldGenTrees implements IWorldGenerator
                 final int x = chunkX * 16 + random.nextInt(16) + 8;
                 final int z = chunkZ * 16 + random.nextInt(16) + 8;
                 final BlockPos pos = world.getTopSolidOrLiquidBlock(new BlockPos(x, 0, z));
-                extra.makeTree(manager, world, pos, random);
+                extra.makeTree(manager, world, pos, random, true);
             }
             return;
         }
 
-        final int spawnTries = (int) (density * density * 20f);
+        final int treesPerChunk = (int) (MathHelper.clamp(density, 0.1, 0.9) * 20f - 2);
         final int maxTrees = Math.min(trees.size(), Math.min(5, (int) (1 + (density + diversity) * 2.5f)));
         trees = trees.subList(0, maxTrees);
 
-        for (int i = 0; i < spawnTries; i++)
+        int treesPlaced = 0;
+        Set<BlockPos> checkedPositions = new HashSet<>();
+        for (int i = 0; treesPlaced < treesPerChunk && i < treesPerChunk * 3; i++)
         {
-            final int x = chunkX * 16 + random.nextInt(16) + 8;
-            final int z = chunkZ * 16 + random.nextInt(16) + 8;
-            final BlockPos pos = world.getTopSolidOrLiquidBlock(new BlockPos(x, 0, z));
-            final Tree tree = getTree(trees, density, random);
+            BlockPos column = new BlockPos(chunkX * 16 + random.nextInt(16) + 8, 0, chunkZ * 16 + random.nextInt(16) + 8);
+            if (!checkedPositions.contains(column))
+            {
+                final BlockPos pos = world.getTopSolidOrLiquidBlock(column);
+                final Tree tree = getTree(trees, density, random);
 
-            tree.makeTree(manager, world, pos, random);
+                checkedPositions.add(column);
+                if (tree.makeTree(manager, world, pos, random, true))
+                {
+                    treesPlaced++;
+                }
+            }
         }
 
         trees.removeIf(t -> !t.hasBushes());
@@ -104,7 +134,9 @@ public class WorldGenTrees implements IWorldGenerator
                 final Tree tree = getTree(trees, density, random);
 
                 if (GEN_BUSHES.canGenerateTree(world, pos, tree))
-                    GEN_BUSHES.generateTree(manager, world, pos, tree, random);
+                {
+                    GEN_BUSHES.generateTree(manager, world, pos, tree, random, true);
+                }
             }
         }
     }
@@ -112,28 +144,10 @@ public class WorldGenTrees implements IWorldGenerator
     private Tree getTree(List<Tree> trees, float density, Random random)
     {
         if (trees.size() == 1 || random.nextFloat() < 0.8f - density * 0.4f)
-            return trees.get(0);
-        return trees.get(1 + random.nextInt(trees.size() - 1));
-    }
-
-    private void generateLooseSticks(Random rand, int chunkX, int chunkZ, World world, int amount)
-    {
-        for (int i = 0; i < amount; i++)
         {
-            final int x = chunkX * 16 + rand.nextInt(16) + 8;
-            final int z = chunkZ * 16 + rand.nextInt(16) + 8;
-            final BlockPos pos = world.getTopSolidOrLiquidBlock(new BlockPos(x, 0, z));
-
-            if (world.getBlockState(pos).getMaterial().isReplaceable() && !world.getBlockState(pos).getMaterial().isLiquid() && world.getBlockState(pos.down()).isOpaqueCube())
-            {
-                world.setBlockState(pos, BlocksTFC.PLACED_ITEM_FLAT.getDefaultState());
-                TEPlacedItemFlat tile = (TEPlacedItemFlat) world.getTileEntity(pos);
-                if (tile != null)
-                {
-                    tile.setStack(new ItemStack(Items.STICK));
-                }
-            }
+            return trees.get(0);
         }
+        return trees.get(1 + random.nextInt(trees.size() - 1));
     }
 
 }

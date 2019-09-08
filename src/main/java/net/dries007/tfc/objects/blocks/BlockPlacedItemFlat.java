@@ -35,15 +35,12 @@ import net.minecraftforge.items.ItemHandlerHelper;
 import net.dries007.tfc.objects.te.TEPlacedItemFlat;
 import net.dries007.tfc.util.Helpers;
 
-/**
- * todo: custom particles for walking / breaking?
- */
 @ParametersAreNonnullByDefault
 public class BlockPlacedItemFlat extends Block
 {
     private static final AxisAlignedBB AABB = new AxisAlignedBB(0.25D, 0D, 0.25D, 0.75D, 0.0625D, 0.75D);
 
-    BlockPlacedItemFlat()
+    public BlockPlacedItemFlat()
     {
         super(Material.CIRCUITS);
         setHardness(0.1F);
@@ -134,7 +131,7 @@ public class BlockPlacedItemFlat extends Block
     public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos)
     {
         super.neighborChanged(state, worldIn, pos, blockIn, fromPos);
-        if (!worldIn.isSideSolid(pos.add(0, -1, 0), EnumFacing.UP))
+        if (!worldIn.isSideSolid(pos.down(), EnumFacing.UP))
         {
             worldIn.setBlockToAir(pos);
         }
@@ -185,6 +182,18 @@ public class BlockPlacedItemFlat extends Block
     public TileEntity createTileEntity(World world, IBlockState state)
     {
         return new TEPlacedItemFlat();
+    }
+
+    @Nonnull
+    @Override
+    public ItemStack getPickBlock(IBlockState state, RayTraceResult target, World world, BlockPos pos, EntityPlayer player)
+    {
+        TEPlacedItemFlat te = Helpers.getTE(world, pos, TEPlacedItemFlat.class);
+        if (te != null)
+        {
+            return te.getStack().copy();
+        }
+        return ItemStack.EMPTY;
     }
 
     @Override

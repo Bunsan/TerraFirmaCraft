@@ -15,12 +15,12 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.NonNullList;
 
 import net.dries007.tfc.TerraFirmaCraft;
+import net.dries007.tfc.api.capability.food.CapabilityFood;
 import net.dries007.tfc.api.capability.heat.CapabilityItemHeat;
-import net.dries007.tfc.api.capability.nutrient.CapabilityFood;
 import net.dries007.tfc.network.PacketCapabilityContainerUpdate;
 
 /**
- * This is a {@link IContainerListener} which will monitor containers and send any capability data changes for IForgeable or IItemHeat
+ * This is a {@link IContainerListener} which will monitor containers and send any capability data changes for IItemHEat / IFood
  *
  * @author Choonster
  * @author AlcatrazEscapee
@@ -89,6 +89,6 @@ public class CapabilityContainerListener implements IContainerListener
 
     private boolean shouldSyncItem(ItemStack stack)
     {
-        return stack.hasCapability(CapabilityItemHeat.ITEM_HEAT_CAPABILITY, null) || stack.hasCapability(CapabilityFood.CAPABILITY_NUTRIENTS, null);
+        return stack.hasCapability(CapabilityItemHeat.ITEM_HEAT_CAPABILITY, null) || stack.hasCapability(CapabilityFood.CAPABILITY, null);
     }
 }

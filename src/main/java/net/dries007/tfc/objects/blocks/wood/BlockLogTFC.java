@@ -27,6 +27,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 import mcp.MethodsReturnNonnullByDefault;
+import net.dries007.tfc.Constants;
 import net.dries007.tfc.api.capability.size.IItemSize;
 import net.dries007.tfc.api.capability.size.Size;
 import net.dries007.tfc.api.capability.size.Weight;
@@ -61,6 +62,7 @@ public class BlockLogTFC extends BlockLog implements IItemSize
         setHardness(15.0F);
         setResistance(5.0F);
         OreDictionaryHelper.register(this, "log", "wood");
+        //noinspection ConstantConditions
         OreDictionaryHelper.register(this, "log", "wood", wood.getRegistryName().getPath());
         if (wood.canMakeTannin())
         {
@@ -69,6 +71,20 @@ public class BlockLogTFC extends BlockLog implements IItemSize
 
         Blocks.FIRE.setFireInfo(this, 5, 5);
         setTickRandomly(true);
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public boolean isFullBlock(IBlockState state)
+    {
+        return !state.getValue(SMALL);
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public int getLightOpacity(IBlockState state)
+    {
+        return state.getValue(SMALL) ? 0 : 255;
     }
 
     @SuppressWarnings("deprecation")
@@ -125,29 +141,36 @@ public class BlockLogTFC extends BlockLog implements IItemSize
     @Override
     public void onExplosionDestroy(World worldIn, BlockPos pos, Explosion explosionIn)
     {
-        if (worldIn.isRemote) return;
-        removeTree(worldIn, pos, null, ItemStack.EMPTY, false);
+        if (!worldIn.isRemote)
+        {
+            removeTree(worldIn, pos, null, ItemStack.EMPTY, false);
+        }
     }
 
     @Override
-    public void onBlockHarvested(World world, BlockPos pos, IBlockState state, EntityPlayer player)
+    public boolean removedByPlayer(IBlockState state, World world, BlockPos pos, EntityPlayer player, boolean willHarvest)
     {
-        if (world.isRemote || state.getValue(PLACED)) return;
-        final ItemStack stack = player.getHeldItemMainhand();
-        final Set<String> toolClasses = stack.getItem().getToolClasses(stack);
-        if (toolClasses.contains("axe"))
+        if (!state.getValue(PLACED))
         {
-            removeTree(world, pos, player, stack,
-                OreDictionaryHelper.doesStackMatchOre(stack, "axeStone") ||
-                    OreDictionaryHelper.doesStackMatchOre(stack, "hammerStone")
-            );
+            final ItemStack stack = player.getHeldItemMainhand();
+            final Set<String> toolClasses = stack.getItem().getToolClasses(stack);
+            if (toolClasses.contains("axe"))
+            {
+                if (!removeTree(world, pos, player, stack, OreDictionaryHelper.doesStackMatchOre(stack, "axeStone") || OreDictionaryHelper.doesStackMatchOre(stack, "hammerStone")))
+                {
+                    return false;
+                }
+                return world.setBlockState(pos, Blocks.AIR.getDefaultState(), world.isRemote ? 11 : 3);
+            }
+            else if (toolClasses.contains("hammer"))
+            {
+                // Break log and spawn some sticks
+                world.setBlockToAir(pos);
+                Helpers.spawnItemStack(world, pos.add(0.5D, 0.5D, 0.5D), new ItemStack(Items.STICK, 1 + (int) (Math.random() * 3)));
+                return true;
+            }
         }
-        else if (toolClasses.contains("hammer")) //
-        {
-            // Break log and spawn some sticks
-            world.setBlockToAir(pos);
-            Helpers.spawnItemStack(world, pos.add(0.5D, 0.5D, 0.5D), new ItemStack(Items.STICK, 1 + (int) (Math.random() * 3)));
-        }
+        return super.removedByPlayer(state, world, pos, player, willHarvest);
     }
 
     @Override
@@ -182,7 +205,8 @@ public class BlockLogTFC extends BlockLog implements IItemSize
     @Override
     public IBlockState getStateForPlacement(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer)
     {
-        return super.getStateForPlacement(worldIn, pos, facing, hitX, hitY, hitZ, meta, placer).withProperty(PLACED, true).withProperty(SMALL, placer.isSneaking());
+        // Small logs are a weird feature, for now they shall be disabled via shift placement since it interferes with log pile placement
+        return super.getStateForPlacement(worldIn, pos, facing, hitX, hitY, hitZ, meta, placer).withProperty(PLACED, true);
     }
 
     @Override
@@ -204,7 +228,7 @@ public class BlockLogTFC extends BlockLog implements IItemSize
 
         // Find all logs and add them to a list
         List<BlockPos> logs = new ArrayList<>(50);
-        List<BlockPos> checked = new ArrayList<>(50 * 3 * 3);
+        Set<BlockPos> checked = new HashSet<>(50 * 3 * 3);
         logs.add(pos);
         for (int i = 0; i < logs.size(); i++)
         {
@@ -217,35 +241,49 @@ public class BlockLogTFC extends BlockLog implements IItemSize
                     for (int z = -1; z <= 1; z++)
                     {
                         final BlockPos pos2 = pos1.add(x, y, z);
-                        if (checked.contains(pos2)) continue;
-                        checked.add(pos2);
-                        IBlockState state = world.getBlockState(pos2);
-                        if (state.getBlock() == this && !state.getValue(PLACED))
-                            logs.add(pos2);
+                        if (!checked.contains(pos2))
+                        {
+                            checked.add(pos2);
+                            IBlockState state = world.getBlockState(pos2);
+                            if (state.getBlock() == this && !state.getValue(PLACED))
+                            {
+                                logs.add(pos2);
+                            }
+                        }
                     }
                 }
             }
         }
         // Sort the list in terms of max distance to the original tree
-        logs.sort(Comparator.comparing(x -> x.distanceSq(pos)));
+        logs.sort(Comparator.comparing(x -> -x.distanceSq(pos)));
 
-        // Start removing logs*/
+        // Start removing logs
         for (final BlockPos pos1 : logs.subList(0, Math.min(logs.size(), maxLogs)))
         {
             if (explosion)
             {
                 // Explosions are 30% Efficient: no TNT powered tree farms.
-                if (Math.random() < 0.3)
-                    Helpers.spawnItemStack(world, pos.add(0.5d, 0.5d, 0.5d), new ItemStack(Item.getItemFromBlock(this)));
+                if (Constants.RNG.nextFloat() < 0.3)
+                {
+                    if (!world.isRemote)
+                    {
+                        Helpers.spawnItemStack(world, pos.add(0.5d, 0.5d, 0.5d), new ItemStack(Item.getItemFromBlock(this)));
+                    }
+                }
             }
             else
             {
                 // Stone tools are 60% efficient
-                if (!stoneTool || Math.random() < 0.6)
+                if (!stoneTool || Constants.RNG.nextFloat() < 0.6 && !world.isRemote)
+                {
                     harvestBlock(world, player, pos1, world.getBlockState(pos1), null, stack);
+                }
                 stack.damageItem(1, player);
             }
-            world.setBlockToAir(pos1);
+            if (!world.isRemote)
+            {
+                world.setBlockToAir(pos1);
+            }
         }
         return maxLogs >= logs.size();
     }

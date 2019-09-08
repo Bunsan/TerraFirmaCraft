@@ -15,7 +15,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 
-import net.dries007.tfc.api.capability.nutrient.FoodHandler;
+import net.dries007.tfc.api.capability.food.FoodHandler;
+import net.dries007.tfc.api.capability.food.FoodHeatHandler;
+import net.dries007.tfc.api.capability.food.IFoodStatsTFC;
+import net.dries007.tfc.util.OreDictionaryHelper;
 import net.dries007.tfc.util.agriculture.Food;
 
 public class ItemFoodTFC extends ItemFood
@@ -36,11 +39,21 @@ public class ItemFoodTFC extends ItemFood
 
     public ItemFoodTFC(@Nonnull Food food)
     {
-        super(food.getCalories(), food.getSaturation(), food.getCategory() == Food.Category.MEAT);
+        super(IFoodStatsTFC.FOOD_HUNGER_AMOUNT, food.getCalories(), food.getCategory() == Food.Category.MEAT);
         this.food = food;
         if (MAP.put(food, this) != null)
         {
             throw new IllegalStateException("There can only be one.");
+        }
+
+        // Use "category" here as to not conflict with actual items, i.e. grain
+        OreDictionaryHelper.register(this, "category", food.getCategory());
+        if (food.getOreDictNames() != null)
+        {
+            for (Object name : food.getOreDictNames())
+            {
+                OreDictionaryHelper.register(this, name);
+            }
         }
     }
 
@@ -48,6 +61,6 @@ public class ItemFoodTFC extends ItemFood
     @Override
     public ICapabilityProvider initCapabilities(ItemStack stack, @Nullable NBTTagCompound nbt)
     {
-        return new FoodHandler(nbt, food);
+        return food.isHeatable() ? new FoodHeatHandler(nbt, food) : new FoodHandler(nbt, food);
     }
 }

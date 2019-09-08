@@ -19,13 +19,14 @@ import net.dries007.tfc.TerraFirmaCraft;
 import net.dries007.tfc.api.types.Tree;
 import net.dries007.tfc.api.util.ITreeGenerator;
 import net.dries007.tfc.objects.blocks.wood.BlockLogTFC;
+import net.dries007.tfc.world.classic.StructureHelper;
 
 import static net.dries007.tfc.objects.blocks.wood.BlockLogTFC.PLACED;
 
 public class TreeGenNormal implements ITreeGenerator
 {
-    private static final PlacementSettings settingsFull = ITreeGenerator.getDefaultSettings();
-    private static final PlacementSettings settingsWeak = ITreeGenerator.getDefaultSettings().setIntegrity(0.5f);
+    private static final PlacementSettings settingsFull = StructureHelper.getDefaultSettings();
+    private static final PlacementSettings settingsWeak = StructureHelper.getDefaultSettings().setIntegrity(0.5f);
     private final int heightMin;
     private final int heightRange;
 
@@ -43,7 +44,7 @@ public class TreeGenNormal implements ITreeGenerator
     }
 
     @Override
-    public void generateTree(TemplateManager manager, World world, BlockPos pos, Tree tree, Random rand)
+    public void generateTree(TemplateManager manager, World world, BlockPos pos, Tree tree, Random rand, boolean isWorldGen)
     {
         ResourceLocation base = new ResourceLocation(tree.getRegistryName() + "/base");
         ResourceLocation overlay = new ResourceLocation(tree.getRegistryName() + "/overlay");
@@ -62,10 +63,10 @@ public class TreeGenNormal implements ITreeGenerator
         BlockPos size = structureBase.getSize();
         pos = pos.add(-size.getX() / 2, height, -size.getZ() / 2);
 
-        ITreeGenerator.addStructureToWorld(world, pos, structureBase, settingsFull);
+        StructureHelper.addStructureToWorld(world, pos, structureBase, settingsFull);
         if (structureOverlay != null)
         {
-            ITreeGenerator.addStructureToWorld(world, pos, structureOverlay, settingsWeak);
+            StructureHelper.addStructureToWorld(world, pos, structureOverlay, settingsWeak);
         }
 
         final IBlockState log = BlockLogTFC.get(tree).getDefaultState().withProperty(PLACED, false);

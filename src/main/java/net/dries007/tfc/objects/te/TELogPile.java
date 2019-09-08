@@ -9,6 +9,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -18,7 +19,6 @@ import net.minecraft.util.ITickable;
 import mcp.MethodsReturnNonnullByDefault;
 import net.dries007.tfc.ConfigTFC;
 import net.dries007.tfc.Constants;
-import net.dries007.tfc.TerraFirmaCraft;
 import net.dries007.tfc.objects.blocks.BlockCharcoalPile;
 import net.dries007.tfc.objects.blocks.BlocksTFC;
 import net.dries007.tfc.objects.blocks.wood.BlockLogPile;
@@ -26,7 +26,7 @@ import net.dries007.tfc.util.Helpers;
 import net.dries007.tfc.util.OreDictionaryHelper;
 
 import static net.dries007.tfc.objects.blocks.BlockCharcoalPile.LAYERS;
-import static net.dries007.tfc.util.ILightableBlock.LIT;
+import static net.dries007.tfc.objects.blocks.property.ILightableBlock.LIT;
 
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
@@ -36,6 +36,7 @@ public class TELogPile extends TEInventory implements ITickable
 
     private boolean burning;
     private int burnTicks;
+    private boolean isContainerOpen;
 
     public TELogPile()
     {
@@ -43,6 +44,55 @@ public class TELogPile extends TEInventory implements ITickable
 
         burnTicks = 0;
         burning = false;
+    }
+
+    public void setContainerOpen(boolean containerOpen)
+    {
+        isContainerOpen = containerOpen;
+        setAndUpdateSlots(-1);
+    }
+
+    @Override
+    public void setAndUpdateSlots(int slot)
+    {
+        if (!world.isRemote)
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                if (!inventory.getStackInSlot(i).isEmpty())
+                {
+                    super.setAndUpdateSlots(slot);
+                    return;
+                }
+            }
+            if (!isContainerOpen)
+            {
+                world.setBlockToAir(pos);
+            }
+        }
+        super.setAndUpdateSlots(slot);
+    }
+
+    @Override
+    public void readFromNBT(NBTTagCompound nbt)
+    {
+        burnTicks = nbt.getInteger("burn_ticks");
+        burning = nbt.getBoolean("burning");
+        super.readFromNBT(nbt);
+    }
+
+    @Override
+    public NBTTagCompound writeToNBT(NBTTagCompound nbt)
+    {
+        nbt.setInteger("burn_ticks", burnTicks);
+        nbt.setBoolean("burning", burning);
+        return super.writeToNBT(nbt);
+    }
+
+    @Override
+    public boolean canInteractWith(EntityPlayer player)
+    {
+        return !burning && world.getTileEntity(pos) == this;
     }
 
     @Override
@@ -73,26 +123,6 @@ public class TELogPile extends TEInventory implements ITickable
     }
 
     @Override
-    public void setAndUpdateSlots(int slot)
-    {
-        if (!world.isRemote)
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                TerraFirmaCraft.getLog().info("Stack in slot: {} = {}", i, inventory.getStackInSlot(i));
-                if (!inventory.getStackInSlot(i).isEmpty())
-                {
-                    super.setAndUpdateSlots(slot);
-                    return;
-                }
-            }
-            TerraFirmaCraft.getLog().info("Setting the block to air!");
-            world.setBlockToAir(pos);
-        }
-        super.setAndUpdateSlots(slot);
-    }
-
-    @Override
     public int getSlotLimit(int slot)
     {
         return 4;
@@ -102,22 +132,6 @@ public class TELogPile extends TEInventory implements ITickable
     public boolean isItemValid(int slot, ItemStack stack)
     {
         return OreDictionaryHelper.doesStackMatchOre(stack, "logWood");
-    }
-
-    @Override
-    public void readFromNBT(NBTTagCompound nbt)
-    {
-        burnTicks = nbt.getInteger("burn_ticks");
-        burning = nbt.getBoolean("burning");
-        super.readFromNBT(nbt);
-    }
-
-    @Override
-    public NBTTagCompound writeToNBT(NBTTagCompound nbt)
-    {
-        nbt.setInteger("burn_ticks", burnTicks);
-        nbt.setBoolean("burning", burning);
-        return super.writeToNBT(nbt);
     }
 
     public boolean insertLog(ItemStack stack)
@@ -202,9 +216,8 @@ public class TELogPile extends TEInventory implements ITickable
             }
         } while (block == Blocks.AIR || block instanceof BlockCharcoalPile);
 
-        double logs = (double) countLogs();
-        double log2 = 0.008d * logs * (logs + 42.5d) - 0.75d + 1.5d * Constants.RNG.nextFloat();
-        int charcoal = (int) Math.min(8, Math.max(0, Math.round(log2)));
+        double logs = countLogs() * (0.25 + 0.25 * Constants.RNG.nextFloat());
+        int charcoal = (int) Math.min(8, Math.max(0, Math.round(logs)));
         if (charcoal == 0)
         {
             world.setBlockState(pos, Blocks.AIR.getDefaultState());

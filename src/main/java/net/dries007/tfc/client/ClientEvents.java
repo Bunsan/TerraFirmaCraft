@@ -14,7 +14,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiCreateWorld;
 import net.minecraft.client.gui.inventory.GuiInventory;
-import net.minecraft.client.gui.recipebook.GuiButtonRecipe;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
@@ -36,24 +35,27 @@ import net.minecraftforge.oredict.OreDictionary;
 
 import net.dries007.tfc.ConfigTFC;
 import net.dries007.tfc.TerraFirmaCraft;
-import net.dries007.tfc.api.capability.forge.CapabilityForgeable;
-import net.dries007.tfc.api.capability.forge.IForgeable;
+import net.dries007.tfc.api.capability.food.CapabilityFood;
+import net.dries007.tfc.api.capability.food.IFood;
 import net.dries007.tfc.api.capability.heat.CapabilityItemHeat;
 import net.dries007.tfc.api.capability.heat.IItemHeat;
-import net.dries007.tfc.api.capability.nutrient.CapabilityFood;
-import net.dries007.tfc.api.capability.nutrient.IFood;
+import net.dries007.tfc.api.capability.metal.CapabilityMetalItem;
+import net.dries007.tfc.api.capability.metal.IMetalItem;
 import net.dries007.tfc.api.capability.size.CapabilityItemSize;
 import net.dries007.tfc.api.capability.size.IItemSize;
-import net.dries007.tfc.api.util.IMetalObject;
 import net.dries007.tfc.api.util.IRockObject;
 import net.dries007.tfc.client.button.GuiButtonPlayerInventoryTab;
 import net.dries007.tfc.client.render.RenderFallingBlockTFC;
+import net.dries007.tfc.client.render.animal.*;
+import net.dries007.tfc.client.render.projectile.RenderThrownJavelin;
 import net.dries007.tfc.network.PacketSwitchPlayerInventoryTab;
 import net.dries007.tfc.objects.entity.EntityFallingBlockTFC;
-import net.dries007.tfc.util.Helpers;
-import net.dries007.tfc.world.classic.CalendarTFC;
-import net.dries007.tfc.world.classic.ClimateRenderHelper;
-import net.dries007.tfc.world.classic.ClimateTFC;
+import net.dries007.tfc.objects.entity.animal.*;
+import net.dries007.tfc.objects.entity.projectile.EntityThrownJavelin;
+import net.dries007.tfc.util.calendar.CalendarTFC;
+import net.dries007.tfc.util.calendar.Month;
+import net.dries007.tfc.util.climate.ClimateHelper;
+import net.dries007.tfc.util.climate.ClimateTFC;
 import net.dries007.tfc.world.classic.chunkdata.ChunkDataProvider;
 import net.dries007.tfc.world.classic.chunkdata.ChunkDataTFC;
 
@@ -66,6 +68,19 @@ public class ClientEvents
     public static void preInit()
     {
         RenderingRegistry.registerEntityRenderingHandler(EntityFallingBlockTFC.class, RenderFallingBlockTFC::new);
+        RenderingRegistry.registerEntityRenderingHandler(EntityThrownJavelin.class, RenderThrownJavelin::new);
+        RenderingRegistry.registerEntityRenderingHandler(EntitySheepTFC.class, RenderSheepTFC::new);
+        RenderingRegistry.registerEntityRenderingHandler(EntityCowTFC.class, RenderCowTFC::new);
+        RenderingRegistry.registerEntityRenderingHandler(EntityBearTFC.class, RenderBearTFC::new);
+        RenderingRegistry.registerEntityRenderingHandler(EntityChickenTFC.class, RenderChickenTFC::new);
+        RenderingRegistry.registerEntityRenderingHandler(EntityPheasantTFC.class, RenderPheasantTFC::new);
+        RenderingRegistry.registerEntityRenderingHandler(EntityDeerTFC.class, RenderDeerTFC::new);
+        RenderingRegistry.registerEntityRenderingHandler(EntityPigTFC.class, RenderPigTFC::new);
+        RenderingRegistry.registerEntityRenderingHandler(EntityWolfTFC.class, RenderWolfTFC::new);
+        RenderingRegistry.registerEntityRenderingHandler(EntityRabbitTFC.class, RenderRabbitTFC::new);
+        RenderingRegistry.registerEntityRenderingHandler(EntityHorseTFC.class, RenderHorseTFC::new);
+        RenderingRegistry.registerEntityRenderingHandler(EntityDonkeyTFC.class, RenderAbstractHorseTFC::new);
+        RenderingRegistry.registerEntityRenderingHandler(EntityMuleTFC.class, RenderAbstractHorseTFC::new);
     }
 
     @SideOnly(Side.CLIENT)
@@ -104,17 +119,18 @@ public class ClientEvents
     @SubscribeEvent
     public static void onGuiButtonPress(GuiScreenEvent.ActionPerformedEvent.Post event)
     {
-        if (event.getGui() instanceof GuiInventory && event.getButton() instanceof GuiButtonPlayerInventoryTab)
+        if (event.getGui() instanceof GuiInventory)
         {
-            // This should generally be true, but check just in case something has disabled it
-            GuiButtonPlayerInventoryTab button = (GuiButtonPlayerInventoryTab) event.getButton();
-            if (button.isActive())
+            if (event.getButton() instanceof GuiButtonPlayerInventoryTab)
             {
-                TerraFirmaCraft.getNetwork().sendToServer(new PacketSwitchPlayerInventoryTab(button.getGuiType()));
+                // This should generally be true, but check just in case something has disabled it
+                GuiButtonPlayerInventoryTab button = (GuiButtonPlayerInventoryTab) event.getButton();
+                if (button.isActive())
+                {
+                    TerraFirmaCraft.getNetwork().sendToServer(new PacketSwitchPlayerInventoryTab(button.getGuiType()));
+                }
             }
-        }
-        else if (event.getGui() instanceof GuiInventory && event.getButton() instanceof GuiButtonRecipe)
-        {
+
             // This is necessary to catch the resizing of the inventory gui when you open the recipe book
             for (GuiButton button : event.getButtonList())
             {
@@ -148,13 +164,17 @@ public class ClientEvents
                 if (data == null || !data.isInitialized()) list.add("No data ?!");
                 else
                 {
-                    list.add(String.format("%sTemp: Base: %s%.1f\u00b0C%s Biome Avg: %s%.1f\u00b0C%s Month: %s%.1f\u00b0C%s Daily: %s%.1f\u00b0C",
-                        GRAY, WHITE, data.getBaseTemp(), GRAY,
+                    list.add(String.format("%sRegion: %s%.1f\u00b0C%s Avg: %s%.1f\u00b0C%s Min: %s%.1f\u00b0C%s Max: %s%.1f\u00b0C",
+                        GRAY, WHITE, data.getRegionalTemp(), GRAY,
                         WHITE, data.getAverageTemp(), GRAY,
-                        WHITE, ClimateRenderHelper.get(blockpos).getTemperature(), GRAY,
-                        WHITE, ClimateTFC.getHeightAdjustedTemp(mc.world, blockpos)));
-                    String monthName = I18n.format(Helpers.getEnumName(CalendarTFC.getMonthOfYear()));
-                    list.add(String.format("Year %04d, %s %02d %02d:%02d", CalendarTFC.getTotalYears(), monthName, CalendarTFC.getDayOfMonth(), CalendarTFC.getHourOfDay(), CalendarTFC.getMinuteOfHour()));
+                        WHITE, ClimateHelper.monthFactor(data.getRegionalTemp(), Month.JANUARY.getTemperatureModifier(), blockpos.getZ()), GRAY,
+                        WHITE, ClimateHelper.monthFactor(data.getRegionalTemp(), Month.JULY.getTemperatureModifier(), blockpos.getZ())));
+                    list.add(String.format("%sTemperature: %s%.1f\u00b0C Daily: %s%.1f\u00b0C",
+                        GRAY, WHITE, ClimateTFC.getMonthlyTemp(blockpos),
+                        WHITE, ClimateTFC.getActualTemp(blockpos)));
+
+                    list.add(I18n.format("tfc.tooltip.date", CalendarTFC.CALENDAR_TIME.getTimeAndDate()));
+                    list.add(I18n.format("tfc.tooltip.debug_times", CalendarTFC.TOTAL_TIME.getTicks(), CalendarTFC.PLAYER_TIME.getTicks(), CalendarTFC.CALENDAR_TIME.getTicks()));
 
                     list.add(GRAY + "Biome: " + WHITE + mc.world.getBiome(blockpos).getBiomeName());
 
@@ -186,106 +206,88 @@ public class ClientEvents
     public static void onItemTooltip(ItemTooltipEvent event)
     {
         ItemStack stack = event.getItemStack();
-        if (stack.isEmpty())
-        {
-            TerraFirmaCraft.getLog().warn("ItemTooltipEvent with empty stack??", new Exception());
-            return;
-        }
         Item item = stack.getItem();
         List<String> tt = event.getToolTip();
-
-        // Stuff that should always be shown as part of the tooltip
-        IItemSize size = CapabilityItemSize.getIItemSize(stack);
-        if (size != null)
+        if (!stack.isEmpty())
         {
-            size.addSizeInfo(stack, tt);
-        }
-        IItemHeat heat = stack.getCapability(CapabilityItemHeat.ITEM_HEAT_CAPABILITY, null);
-        if (heat != null)
-        {
-            heat.addHeatInfo(stack, tt);
-        }
-        IFood nutrients = stack.getCapability(CapabilityFood.CAPABILITY_NUTRIENTS, null);
-        if (nutrients != null)
-        {
-            nutrients.addNutrientInfo(stack, tt);
-        }
-
-        if (event.getFlags().isAdvanced()) // Only added with advanced tooltip mode
-        {
-            if (item instanceof IMetalObject)
+            // Stuff that should always be shown as part of the tooltip
+            IItemSize size = CapabilityItemSize.getIItemSize(stack);
+            if (size != null)
             {
-                ((IMetalObject) item).addMetalInfo(stack, tt);
+                size.addSizeInfo(stack, tt);
             }
-            else if (item instanceof ItemBlock)
+            IItemHeat heat = stack.getCapability(CapabilityItemHeat.ITEM_HEAT_CAPABILITY, null);
+            if (heat != null)
             {
-                Block block = ((ItemBlock) item).getBlock();
-                if (block instanceof IMetalObject)
+                heat.addHeatInfo(stack, tt);
+            }
+            IFood nutrients = stack.getCapability(CapabilityFood.CAPABILITY, null);
+            if (nutrients != null)
+            {
+                nutrients.addNutrientInfo(stack, tt);
+            }
+
+            if (event.getFlags().isAdvanced()) // Only added with advanced tooltip mode
+            {
+                IMetalItem metalObject = CapabilityMetalItem.getMetalItem(stack);
+                if (metalObject != null)
                 {
-                    ((IMetalObject) block).addMetalInfo(stack, tt);
+                    metalObject.addMetalInfo(stack, tt);
                 }
-            }
-            if (item instanceof IRockObject)
-            {
-                ((IRockObject) item).addRockInfo(stack, tt);
-            }
-            else if (item instanceof ItemBlock)
-            {
-                Block block = ((ItemBlock) item).getBlock();
-                if (block instanceof IRockObject)
+                if (item instanceof IRockObject)
                 {
-                    ((IRockObject) block).addRockInfo(stack, tt);
+                    ((IRockObject) item).addRockInfo(stack, tt);
                 }
-            }
-
-            // todo: remove this debug tooltip
-            if (stack.hasCapability(CapabilityForgeable.FORGEABLE_CAPABILITY, null))
-            {
-                IForgeable cap = stack.getCapability(CapabilityForgeable.FORGEABLE_CAPABILITY, null);
-                assert cap != null;
-                tt.add("Forge Stuff: " + cap.serializeNBT());
-            }
-
-            if (ConfigTFC.CLIENT.showToolClassTooltip)
-            {
-                Set<String> toolClasses = item.getToolClasses(stack);
-                if (toolClasses.size() == 1)
+                else if (item instanceof ItemBlock)
                 {
-                    tt.add(I18n.format("tfc.tooltip.toolclass", toolClasses.iterator().next()));
-                }
-                else if (toolClasses.size() > 1)
-                {
-                    tt.add(I18n.format("tfc.tooltip.toolclasses"));
-                    for (String toolClass : toolClasses)
+                    Block block = ((ItemBlock) item).getBlock();
+                    if (block instanceof IRockObject)
                     {
-                        tt.add("+ " + toolClass);
+                        ((IRockObject) block).addRockInfo(stack, tt);
                     }
                 }
-            }
-            if (ConfigTFC.CLIENT.showOreDictionaryTooltip)
-            {
-                int[] ids = OreDictionary.getOreIDs(stack);
-                if (ids.length == 1)
+
+                if (ConfigTFC.CLIENT.showToolClassTooltip)
                 {
-                    tt.add(I18n.format("tfc.tooltip.oredictionaryentry", OreDictionary.getOreName(ids[0])));
-                }
-                else if (ids.length > 1)
-                {
-                    tt.add(I18n.format("tfc.tooltip.oredictionaryentries"));
-                    ArrayList<String> names = new ArrayList<>(ids.length);
-                    for (int id : ids)
+                    Set<String> toolClasses = item.getToolClasses(stack);
+                    if (toolClasses.size() == 1)
                     {
-                        names.add("+ " + OreDictionary.getOreName(id));
+                        tt.add(I18n.format("tfc.tooltip.toolclass", toolClasses.iterator().next()));
                     }
-                    names.sort(null); // Natural order (String.compare)
-                    tt.addAll(names);
+                    else if (toolClasses.size() > 1)
+                    {
+                        tt.add(I18n.format("tfc.tooltip.toolclasses"));
+                        for (String toolClass : toolClasses)
+                        {
+                            tt.add("+ " + toolClass);
+                        }
+                    }
                 }
-            }
-            if (ConfigTFC.CLIENT.showNBTTooltip)
-            {
-                if (stack.hasTagCompound())
+                if (ConfigTFC.CLIENT.showOreDictionaryTooltip)
                 {
-                    tt.add("NBT: " + stack.getTagCompound());
+                    int[] ids = OreDictionary.getOreIDs(stack);
+                    if (ids.length == 1)
+                    {
+                        tt.add(I18n.format("tfc.tooltip.oredictionaryentry", OreDictionary.getOreName(ids[0])));
+                    }
+                    else if (ids.length > 1)
+                    {
+                        tt.add(I18n.format("tfc.tooltip.oredictionaryentries"));
+                        ArrayList<String> names = new ArrayList<>(ids.length);
+                        for (int id : ids)
+                        {
+                            names.add("+ " + OreDictionary.getOreName(id));
+                        }
+                        names.sort(null); // Natural order (String.compare)
+                        tt.addAll(names);
+                    }
+                }
+                if (ConfigTFC.CLIENT.showNBTTooltip)
+                {
+                    if (stack.hasTagCompound())
+                    {
+                        tt.add("NBT: " + stack.getTagCompound());
+                    }
                 }
             }
         }

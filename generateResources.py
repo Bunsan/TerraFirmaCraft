@@ -150,6 +150,19 @@ WOOD_TYPES = [
     'blackwood',
     'palm',
 ]
+BERRY_TYPES = {
+    'blackberry': 'large',
+    'blueberry': 'large',
+    'bunch_berry': 'small',
+    'cloud_berry': 'medium',
+    'cranberry': 'medium',
+    'elderberry': 'large',
+    'gooseberry': 'medium',
+    'raspberry': 'large',
+    'snow_berry': 'small',
+    'strawberry': 'small',
+    'wintergreen_berry': 'small',
+}
 GEM_TYPES = [
     'agate',
     'amethyst',
@@ -233,6 +246,7 @@ METAL_ITEMS = {
     'knife_blade': True,
     'scythe': True,
     'scythe_blade': True,
+    'shears': True,
     'unfinished_chestplate': True,
     'chestplate': True,
     'unfinished_greaves': True,
@@ -249,7 +263,8 @@ STEEL = {
     'black_steel',
 }
 TOOLS = [
-    'pick', 'propick', 'shovel', 'axe', 'hoe', 'chisel', 'sword', 'mace', 'saw', 'javelin', 'hammer', 'knife', 'scythe'
+    'pick', 'propick', 'shovel', 'axe', 'hoe', 'chisel', 'sword', 'mace', 'saw', 'shears', 'javelin', 'hammer', 'knife',
+    'scythe'
 ]
 FLUIDS = {
     'salt_water': 'salt_water',
@@ -292,7 +307,6 @@ SIMPLE_CROPS = {
     'onion': (False, 7),
     'potato': (False, 7),
     'soybean': (False, 7),
-    # 'squash': (False, 7),
     'sugarcane': (False, 8),
     'red_bell_pepper': (False, 7),
     'tomato': (False, 8),
@@ -365,12 +379,33 @@ FOODS = [
     'squash',
     'tomato',
     'yellow_bell_pepper',
+    'cheese',
+    'cooked_egg',
+    'sugarcane',
+    'beef',
+    'pork',
+    'chicken',
+    'mutton',
+    'fish',
+    'bear',
     'calamari',
     'horse_meat',
+    'pheasant',
     'venison',
-    'cheese',
-    'sugarcane',
-    'cooked_egg'
+    'rabbit',
+    'wolf',
+    'cooked_beef',
+    'cooked_pork',
+    'cooked_chicken',
+    'cooked_mutton',
+    'cooked_fish',
+    'cooked_bear',
+    'cooked_calamari',
+    'cooked_horse_meat',
+    'cooked_pheasant',
+    'cooked_wolf',
+    'cooked_venison',
+    'cooked_rabbit'
 ]
 
 # Special 'hardcoded' cases
@@ -392,41 +427,41 @@ DOOR_VARIANTS = {
     'facing=south,half=lower,hinge=right,open=true': {'model': 'door_bottom'},
     'facing=west,half=lower,hinge=right,open=true': {'model': 'door_bottom', 'y': 90},
     'facing=north,half=lower,hinge=right,open=true': {'model': 'door_bottom', 'y': 180},
-    'facing=east,half=upper,hinge=left,open=false': {'model': 'door_top'},
-    'facing=south,half=upper,hinge=left,open=false': {'model': 'door_top', 'y': 90},
-    'facing=west,half=upper,hinge=left,open=false': {'model': 'door_top', 'y': 180},
-    'facing=north,half=upper,hinge=left,open=false': {'model': 'door_top', 'y': 270},
-    'facing=east,half=upper,hinge=right,open=false': {'model': 'door_top_rh'},
-    'facing=south,half=upper,hinge=right,open=false': {'model': 'door_top_rh', 'y': 90},
-    'facing=west,half=upper,hinge=right,open=false': {'model': 'door_top_rh', 'y': 180},
-    'facing=north,half=upper,hinge=right,open=false': {'model': 'door_top_rh', 'y': 270},
-    'facing=east,half=upper,hinge=left,open=true': {'model': 'door_top_rh', 'y': 90},
-    'facing=south,half=upper,hinge=left,open=true': {'model': 'door_top_rh', 'y': 180},
-    'facing=west,half=upper,hinge=left,open=true': {'model': 'door_top_rh', 'y': 270},
-    'facing=north,half=upper,hinge=left,open=true': {'model': 'door_top_rh'},
-    'facing=east,half=upper,hinge=right,open=true': {'model': 'door_top', 'y': 270},
-    'facing=south,half=upper,hinge=right,open=true': {'model': 'door_top'},
-    'facing=west,half=upper,hinge=right,open=true': {'model': 'door_top', 'y': 90},
-    'facing=north,half=upper,hinge=right,open=true': {'model': 'door_top', 'y': 180}
+    'facing=east,half=upper,hinge=left,open=false': {'model': 'tfc:door_top_tfc'},
+    'facing=south,half=upper,hinge=left,open=false': {'model': 'tfc:door_top_tfc', 'y': 90},
+    'facing=west,half=upper,hinge=left,open=false': {'model': 'tfc:door_top_tfc', 'y': 180},
+    'facing=north,half=upper,hinge=left,open=false': {'model': 'tfc:door_top_tfc', 'y': 270},
+    'facing=east,half=upper,hinge=right,open=false': {'model': 'tfc:door_top_rh_tfc'},
+    'facing=south,half=upper,hinge=right,open=false': {'model': 'tfc:door_top_rh_tfc', 'y': 90},
+    'facing=west,half=upper,hinge=right,open=false': {'model': 'tfc:door_top_rh_tfc', 'y': 180},
+    'facing=north,half=upper,hinge=right,open=false': {'model': 'tfc:door_top_rh_tfc', 'y': 270},
+    'facing=east,half=upper,hinge=left,open=true': {'model': 'tfc:door_top_rh_tfc', 'y': 90},
+    'facing=south,half=upper,hinge=left,open=true': {'model': 'tfc:door_top_rh_tfc', 'y': 180},
+    'facing=west,half=upper,hinge=left,open=true': {'model': 'tfc:door_top_rh_tfc', 'y': 270},
+    'facing=north,half=upper,hinge=left,open=true': {'model': 'tfc:door_top_rh_tfc'},
+    'facing=east,half=upper,hinge=right,open=true': {'model': 'tfc:door_top_tfc', 'y': 270},
+    'facing=south,half=upper,hinge=right,open=true': {'model': 'tfc:door_top_tfc'},
+    'facing=west,half=upper,hinge=right,open=true': {'model': 'tfc:door_top_tfc', 'y': 90},
+    'facing=north,half=upper,hinge=right,open=true': {'model': 'tfc:door_top_tfc', 'y': 180}
 }
 TRAPDOOR_VARIANTS = {
     'normal': None,
-    'facing=north,half=bottom,open=false': {'model': 'trapdoor_bottom'},
-    'facing=south,half=bottom,open=false': {'model': 'trapdoor_bottom'},
-    'facing=east,half=bottom,open=false': {'model': 'trapdoor_bottom'},
-    'facing=west,half=bottom,open=false': {'model': 'trapdoor_bottom'},
-    'facing=north,half=top,open=false': {'model': 'trapdoor_top'},
-    'facing=south,half=top,open=false': {'model': 'trapdoor_top'},
-    'facing=east,half=top,open=false': {'model': 'trapdoor_top'},
-    'facing=west,half=top,open=false': {'model': 'trapdoor_top'},
-    'facing=north,half=bottom,open=true': {'model': 'trapdoor_open'},
-    'facing=south,half=bottom,open=true': {'model': 'trapdoor_open', 'y': 180},
-    'facing=east,half=bottom,open=true': {'model': 'trapdoor_open', 'y': 90},
-    'facing=west,half=bottom,open=true': {'model': 'trapdoor_open', 'y': 270},
-    'facing=north,half=top,open=true': {'model': 'trapdoor_open'},
-    'facing=south,half=top,open=true': {'model': 'trapdoor_open', 'y': 180},
-    'facing=east,half=top,open=true': {'model': 'trapdoor_open', 'y': 90},
-    'facing=west,half=top,open=true': {'model': 'trapdoor_open', 'y': 270}
+    'facing=north,half=bottom,open=false': {'model': 'tfc:trapdoor_tfc', 'x': 180},
+    'facing=south,half=bottom,open=false': {'model': 'tfc:trapdoor_tfc', 'x': 180},
+    'facing=east,half=bottom,open=false': {'model': 'tfc:trapdoor_tfc', 'x': 180},
+    'facing=west,half=bottom,open=false': {'model': 'tfc:trapdoor_tfc', 'x': 180},
+    'facing=north,half=top,open=false': {'model': 'tfc:trapdoor_tfc'},
+    'facing=south,half=top,open=false': {'model': 'tfc:trapdoor_tfc'},
+    'facing=east,half=top,open=false': {'model': 'tfc:trapdoor_tfc'},
+    'facing=west,half=top,open=false': {'model': 'tfc:trapdoor_tfc'},
+    'facing=north,half=bottom,open=true': {'model': 'tfc:trapdoor_tfc', 'x': 270},
+    'facing=south,half=bottom,open=true': {'model': 'tfc:trapdoor_tfc', 'x': 90},
+    'facing=east,half=bottom,open=true': {'model': 'tfc:trapdoor_tfc', 'x': 270, 'y': 90},
+    'facing=west,half=bottom,open=true': {'model': 'tfc:trapdoor_tfc', 'x': 270, 'y': 270},
+    'facing=north,half=top,open=true': {'model': 'tfc:trapdoor_tfc', 'x': 270},
+    'facing=south,half=top,open=true': {'model': 'tfc:trapdoor_tfc', 'x': 90},
+    'facing=east,half=top,open=true': {'model': 'tfc:trapdoor_tfc', 'x': 270, 'y': 90},
+    'facing=west,half=top,open=true': {'model': 'tfc:trapdoor_tfc', 'x': 270, 'y': 270}
 }
 STAIR_VARIANTS = {
     'normal': {'model': 'stairs'},
@@ -486,7 +521,7 @@ def del_none(d):
     return d
 
 
-def blockstate(filename_parts, model, textures, variants=None):
+def blockstate(filename_parts, model, textures, variants=None, uvlock=None):
     """
     Magic.
     :param filename_parts: Iterable of strings.
@@ -518,8 +553,9 @@ def blockstate(filename_parts, model, textures, variants=None):
             'defaults': {
                 'model': model,
                 'textures': _textures,
+                'uvlock': True if uvlock else None
             },
-            'variants': _variants,
+            'variants': _variants
         }), file, indent=2)
 
 
@@ -539,7 +575,8 @@ def model(filename_parts, parent, textures):
 
 
 def item(filename_parts, *layers, parent='item/generated'):
-    model(('item', *filename_parts), parent, None if len(layers) == 0 else {'layer%d' % i: v for i, v in enumerate(layers)})
+    model(('item', *filename_parts), parent,
+          None if len(layers) == 0 else {'layer%d' % i: v for i, v in enumerate(layers)})
 
 
 #   ____  _            _        _        _
@@ -609,18 +646,16 @@ for key in METAL_TYPES:
 
 # METAL SHEETS
 for key in METAL_TYPES:
-    blockstate(('sheet', key), 'tfc:sheet', textures={
+    blockstate(('sheet', key), 'tfc:empty', textures={
         ('all', 'particle'): 'tfc:blocks/metal/%s' % key
     }, variants={
         'normal': None,
-        'face': {
-            'north': {'x': 90},
-            'east': {'y': 90, 'x': 90},
-            'south': {'y': 180, 'x': 90},
-            'west': {'y': 270, 'x': 90},
-            'up': {},
-            'down': {'x': 180}
-        }
+        "north": {"true": {"submodel": {"north": {"model": "tfc:sheet", "x": 90}}}, "false": {}},
+        "south": {"true": {"submodel": {"south": {"model": "tfc:sheet", "y": 180, "x": 90}}}, "false": {}},
+        "east": {"true": {"submodel": {"east": {"model": "tfc:sheet", "y": 90, "x": 90}}}, "false": {}},
+        "west": {"true": {"submodel": {"west": {"model": "tfc:sheet", "y": 270, "x": 90}}}, "false": {}},
+        "up": {"true": {"submodel": {"up": {"model": "tfc:sheet"}}}, "false": {}},
+        "down": {"true": {"submodel": {"down": {"model": "tfc:sheet", "x": 180}}}, "false": {}}
     })
 
 # ROCK STUFF
@@ -688,13 +723,22 @@ for rock_type in ROCK_TYPES:
             'west': {'true': {'submodel': 'wall_side', 'y': 270}, 'false': {}},
             'up': {'true': {'submodel': 'wall_post', 'y': 270}, 'false': {}}
         })
+        
+    # SPIKES (stalactite and stalagmite)
+    blockstate(('spike', rock_type), 'tfc:spike/top', textures={
+        ('texture', 'particle'): 'tfc:blocks/stonetypes/raw/%s' % rock_type,
+    }, variants={
+        'normal': None,
+        'ceiling': {'true': {'x': 180}, 'false': {}},
+        'base': {'true': {'model': 'tfc:spike/base'}, 'false': {}}
+    })
 
     # (ROCK) STAIRS & SLABS
     for block_type in ['smooth', 'cobble', 'bricks']:
         blockstate(('stairs', block_type, rock_type), None, textures={
             ('top', 'bottom', 'side'): 'tfc:blocks/stonetypes/%s/%s' % (block_type, rock_type),
-        }, variants=STAIR_VARIANTS)
-        blockstate(('slab', 'half', block_type, rock_type), 'half_slab', textures={
+        }, variants=STAIR_VARIANTS, uvlock=True)
+        blockstate(('slab', block_type, rock_type), 'half_slab', textures={
             ('top', 'bottom', 'side'): 'tfc:blocks/stonetypes/%s/%s' % (block_type, rock_type),
         }, variants={
             'half': {
@@ -702,7 +746,7 @@ for rock_type in ROCK_TYPES:
                 'top': {'model': 'upper_slab'}
             }
         })
-        cube_all(('slab', 'full', block_type, rock_type), 'tfc:blocks/stonetypes/%s/%s' % (block_type, rock_type))
+        cube_all(('double_slab', block_type, rock_type), 'tfc:blocks/stonetypes/%s/%s' % (block_type, rock_type))
 
     # (STONE) BUTTON
     blockstate(('stone', 'button', rock_type), 'button', textures={
@@ -733,20 +777,30 @@ for rock_type in ['granite', 'rhyolite', 'basalt', 'gabbro', 'diorite', 'andesit
         ('all', 'particle'): 'tfc:blocks/stonetypes/raw/%s' % rock_type,
     })
 
+for berry_type, size in BERRY_TYPES.items():
+    # BERRY BUSH
+    blockstate(('berry_bush', berry_type), 'tfc:berry_bush_%s' % size, textures={
+        'texture': 'tfc:blocks/berry_bush/bush/%s' % berry_type,
+        'particle': 'tfc:blocks/berry_bush/bush/%s' % berry_type,
+    }, variants={
+        'inventory': {'model': 'tfc:berry_bush_large'},
+        'fruiting': {'true': {'textures': {'texture': 'tfc:blocks/berry_bush/berry/%s' % berry_type}}, 'false': {}},
+    })
 
 # WOOD STUFF
 for wood_type in WOOD_TYPES:
     # LOG BLOCKS
-    blockstate(('wood', 'log', wood_type), 'cube_column', textures={
+    blockstate(('wood', 'log', wood_type), 'item/generated', textures={
         ('particle', 'side'): 'tfc:blocks/wood/log/%s' % wood_type,
         'end': 'tfc:blocks/wood/top/%s' % wood_type,
         'layer0': 'tfc:items/wood/log/%s' % wood_type,
     }, variants={
         'axis': {
-            'y': {},
-            'z': {'x': 90},
-            'x': {'x': 90, 'y': 90},
+            'y': {'model': 'cube_column'},
+            'z': {'model': 'cube_column', 'x': 90},
+            'x': {'model': 'cube_column', 'x': 90, 'y': 90},
             'none': {
+                'model': 'cube_column',
                 'textures': {'end': 'tfc:blocks/wood/log/%s' % wood_type}
             }
         },
@@ -820,8 +874,8 @@ for wood_type in WOOD_TYPES:
     # (WOOD) STAIRS & SLABS
     blockstate(('stairs', 'wood', wood_type), None, textures={
         ('top', 'bottom', 'side'): 'tfc:blocks/wood/planks/%s' % wood_type,
-    }, variants=STAIR_VARIANTS)
-    blockstate(('slab', 'half', 'wood', wood_type), 'half_slab', textures={
+    }, variants=STAIR_VARIANTS, uvlock=True)
+    blockstate(('slab', 'wood', wood_type), 'half_slab', textures={
         ('top', 'bottom', 'side'): 'tfc:blocks/wood/planks/%s' % wood_type,
     }, variants={
         'half': {
@@ -829,13 +883,12 @@ for wood_type in WOOD_TYPES:
             'top': {'model': 'upper_slab'}
         }
     })
-    cube_all(('slab', 'full', 'wood', wood_type), 'tfc:blocks/wood/planks/%s' % wood_type)
+    cube_all(('double_slab', 'wood', wood_type), 'tfc:blocks/wood/planks/%s' % wood_type)
 
     # (WOOD) TRAPDOORS
     blockstate(('wood', 'trapdoor', wood_type), None, textures={
-            'texture': 'tfc:blocks/wood/trapdoor/%s' % wood_type,
-        'all': 'tfc:blocks/wood/trapdoor/%s' % wood_type,
-        }, variants=TRAPDOOR_VARIANTS)
+        'texture': 'tfc:blocks/wood/trapdoor/%s' % wood_type
+    }, variants=TRAPDOOR_VARIANTS)
 
     # CHESTS
     blockstate(('wood', 'chest', wood_type), 'tfc:chest', textures={
@@ -894,22 +947,38 @@ for wood_type in WOOD_TYPES:
         }
     })
 
+    # LOOM
+    blockstate(('wood', 'loom', wood_type), 'tfc:loom', textures={
+        'texture': 'tfc:blocks/wood/planks/%s' % wood_type,
+        'particle': 'tfc:blocks/wood/planks/%s' % wood_type,
+    }, variants={
+        'facing': {
+            'south': {},
+            'west': {'y': 90},
+            'north': {'y': 180},
+            'east': {'y': 270},
+        }
+    })
+
+    # SUPPORT
+    blockstate(('wood', 'support', wood_type), 'tfc:support/vertical', textures={
+        'texture': 'tfc:blocks/wood/sheets/%s' % wood_type,
+        'particle': 'tfc:blocks/wood/sheets/%s' % wood_type,
+    }, variants={
+        'inventory': {'model': 'tfc:support/inventory'},
+        'axis': {
+            'y': {'model': 'tfc:support/vertical'}, 'x': {'model': 'tfc:support/horizontal'},
+            'z': {'model': 'tfc:support/horizontal', 'y': 90}
+        },
+        'north': {'true': {'submodel': 'tfc:support/connection', 'y': 270}, 'false': {}},
+        'east': {'true': {'submodel': 'tfc:support/connection'}, 'false': {}},
+        'south': {'true': {'submodel': 'tfc:support/connection', 'y': 90}, 'false': {}},
+        'west': {'true': {'submodel': 'tfc:support/connection', 'y': 180}, 'false': {}},
+    })
+
 # LEATHER / HIDES
 blockstate(('placed_hide',), 'tfc:hide_rack', {})
 
-# AGRICULTURE
-
-for crop in SIMPLE_CROPS.keys():
-    tall = SIMPLE_CROPS[crop][0]
-    stages = SIMPLE_CROPS[crop][1]
-    blockstate(('crop', crop), 'tfc:crop_tall' if tall else 'crop', {'crop': 'tfc:blocks/crop/%s_0' % crop}, {
-        'stage': dict(('%d' % i, {'textures': {'crop': 'tfc:blocks/crop/%s_%d' % (crop, i)}}) for i in range(stages))
-    })
-
-for crop in SPREADING_CROPS:
-    blockstate(('crop', crop), 'crop', {'crop': 'tfc:blocks/crop/%s_0' % crop}, {
-        'stage': dict(('%d' % i, {'textures': {'crop': 'tfc:blocks/crop/%s_%d' % (crop, i)}}) for i in range(8))
-    })
 
 #   _____ _
 #  |_   _| |
@@ -952,12 +1021,14 @@ for item_type, tool_item in METAL_ITEMS.items():
         if tool_item and not tool_metal:
             continue
         if item_type == 'anvil':
-            model(('item', 'metal', 'anvil', metal), 'tfc:item/metal/anvil/transformations', {'all': 'tfc:blocks/metal/%s' % metal})
+            model(('item', 'metal', 'anvil', metal), 'tfc:item/metal/anvil/transformations',
+                  {'all': 'tfc:blocks/metal/%s' % metal})
         else:
             parent = 'item/handheld' if item_type in TOOLS else 'item/generated'
             if item_type in ['knife', 'javelin']:
                 parent = 'tfc:item/handheld_flipped'
-            item(('metal', item_type, metal), 'tfc:items/metal/%s/%s' % (item_type.replace('unfinished_', ''), metal), parent=parent)
+            item(('metal', item_type, metal), 'tfc:items/metal/%s/%s' % (item_type.replace('unfinished_', ''), metal),
+                 parent=parent)
 for metal in STEEL:
     for type in ['high_carbon', 'weak']:
         item(('metal', 'ingot', type + '_' + metal), 'tfc:items/metal/ingot/%s' % metal)
@@ -991,23 +1062,38 @@ _heads = [x + '_head' for x in TOOLS] + [x + '_blade' for x in TOOLS]
 for item_type in METAL_ITEMS:
     if item_type not in _heads:
         continue
-    item(('mold', item_type, 'unfired'), 'tfc:items/mold/%s/%s' % ('unfired', item_type.split('_')[0]))
-    item(('mold', item_type, 'empty'), 'tfc:items/mold/%s/%s' % ('empty', item_type.split('_')[0]))
-    for metal in ['copper', 'bronze', 'black_bronze', 'bismuth_bronze']:
-        item(('mold', item_type, metal), 'tfc:items/mold/%s/%s' % (metal, item_type.split('_')[0]))
-for type in ['empty', 'unfired', 'unknown']:
-    item(('mold', 'ingot', type), 'tfc:items/mold/ingot/' + type)
-for metal in METAL_TYPES.keys():
-    item(('mold', 'ingot', metal), 'tfc:items/mold/ingot/' + metal)
+    # unfired molds
+    item(('ceramics', 'unfired', 'mold', item_type), 'tfc:items/ceramics/unfired/mold/%s' % item_type)
+    # fired, empty molds
+    item(('ceramics', 'fired', 'mold', item_type, 'empty'), 'tfc:items/ceramics/fired/mold/%s/empty' % item_type)
+    # fired, filled molds
+    for metal in ('copper', 'bronze', 'black_bronze', 'bismuth_bronze'):
+        item(('ceramics', 'fired', 'mold', item_type, metal),
+             'tfc:items/ceramics/fired/mold/%s/%s' % (item_type, metal))
 del _heads
+
+# unfired ingot molds
+item(('ceramics', 'unfired', 'mold', 'ingot'), 'tfc:items/ceramics/unfired/mold/ingot')
+# fired ingot molds for all metals
+_ingotMetals = {}  # metal name -> texture
+for metal in METAL_TYPES.keys():
+    _ingotMetals[metal] = metal
+for name in ('empty', 'unknown'):
+    _ingotMetals[name] = name
+for prefix in ('weak', 'high_carbon'):
+    for steel in ('blue_steel', 'red_steel', 'black_steel', 'steel'):
+        if prefix != 'weak' or steel != 'black_steel':
+            _ingotMetals['_'.join((prefix, steel))] = steel
+
+for metal, texture in _ingotMetals.items():
+    item(('ceramics', 'fired', 'mold', 'ingot', metal), 'tfc:items/ceramics/fired/mold/ingot/' + texture)
+del _ingotMetals
 
 item(('ceramics', 'unfired', 'vessel'), 'tfc:items/ceramics/unfired/vessel')
 item(('ceramics', 'fired', 'vessel'), 'tfc:items/ceramics/fired/vessel')
-item(('ceramics', 'unfired', 'vessel_glazed'),
-     'tfc:items/ceramics/unfired/vessel',
+item(('ceramics', 'unfired', 'vessel_glazed'), 'tfc:items/ceramics/unfired/vessel',
      'tfc:items/ceramics/fired/vessel_overlay')
-item(('ceramics', 'fired', 'vessel_glazed'),
-     'tfc:items/ceramics/fired/vessel',
+item(('ceramics', 'fired', 'vessel_glazed'), 'tfc:items/ceramics/fired/vessel',
      'tfc:items/ceramics/fired/vessel_overlay')
 
 item(('ceramics', 'unfired', 'spindle'), 'tfc:items/ceramics/unfired/spindle')
@@ -1019,7 +1105,6 @@ item(('ceramics', 'fired', 'bowl'), 'tfc:items/ceramics/fired/bowl')
 item(('ceramics', 'unfired', 'fire_brick'), 'tfc:items/ceramics/unfired/fire_brick')
 item(('ceramics', 'fired', 'fire_brick'), 'tfc:items/ceramics/fired/fire_brick')
 item(('ceramics', 'unfired', 'jug'), 'tfc:items/ceramics/unfired/jug')
-item(('ceramics', 'fired', 'jug'), 'tfc:items/ceramics/fired/jug')
 
 item(('ceramics', 'fire_clay'), 'tfc:items/ceramics/fire_clay')
 
@@ -1030,10 +1115,8 @@ for rock_cat in ROCK_TYPES:
 # LEATHER / HIDES
 
 for size in ('small', 'medium', 'large'):
-    for hide in ('raw', 'scraped', 'soaked', 'prepared'):
+    for hide in ('raw', 'scraped', 'soaked', 'prepared', 'sheepskin'):
         item(('hide', hide, size), 'tfc:items/hide/%s/%s' % (size, hide))
-
-item(('hide', 'sheepskin'), 'tfc:items/hide/sheepskin')
 
 # AGRICULTURE
 for food in FOODS:

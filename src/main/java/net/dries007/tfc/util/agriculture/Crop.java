@@ -13,12 +13,13 @@ import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemStack;
 
 import net.dries007.tfc.api.types.ICrop;
-import net.dries007.tfc.objects.blocks.crops.BlockCropSimple;
-import net.dries007.tfc.objects.blocks.crops.BlockCropSpreading;
-import net.dries007.tfc.objects.blocks.crops.BlockCropTFC;
+import net.dries007.tfc.objects.blocks.agriculture.BlockCropSimple;
+import net.dries007.tfc.objects.blocks.agriculture.BlockCropSpreading;
+import net.dries007.tfc.objects.blocks.agriculture.BlockCropTFC;
 import net.dries007.tfc.objects.items.ItemsTFC;
 import net.dries007.tfc.objects.items.food.ItemFoodTFC;
-import net.dries007.tfc.world.classic.CalendarTFC;
+import net.dries007.tfc.util.calendar.CalendarTFC;
+import net.dries007.tfc.util.calendar.ICalendar;
 
 import static net.dries007.tfc.util.agriculture.Crop.CropType.*;
 
@@ -38,7 +39,7 @@ public enum Crop implements ICrop
     ONION(Food.ONION, 5f, 35f, 100f, 400f, 7, 0.5f, SIMPLE),
     POTATO(Food.POTATO, 5f, 35f, 100f, 400f, 7, 0.5f, SIMPLE),
     SOYBEAN(Food.SOYBEAN, 5f, 35f, 100f, 400f, 7, 0.5f, SIMPLE),
-    SQUASH(Food.SQUASH, 5f, 35f, 100f, 400f, 7, 0.5f, SPREADING),
+    SQUASH(Food.SQUASH, 5f, 35f, 100f, 400f, 8, 0.5f, SPREADING),
     SUGARCANE(Food.SUGARCANE, 5f, 35f, 100f, 400f, 8, 0.5f, SIMPLE),
     RED_BELL_PEPPER(() -> new ItemStack(ItemFoodTFC.get(Food.RED_BELL_PEPPER)), () -> new ItemStack(ItemFoodTFC.get(Food.GREEN_BELL_PEPPER)), 5f, 35f, 100f, 400f, 7, 0.5f, SIMPLE),
     TOMATO(Food.TOMATO, 5f, 35f, 100f, 400f, 8, 0.5f, SIMPLE),
@@ -79,7 +80,8 @@ public enum Crop implements ICrop
 
         this.growthStages = growthStages;
         // The value stored it measured in hours, the input value is in months
-        this.growthTime = growthTime * CalendarTFC.getDaysInMonth() * 24;
+        // todo: the input should be in days instead of months
+        this.growthTime = growthTime * ICalendar.HOURS_IN_DAY * CalendarTFC.INSTANCE.getDaysInMonth();
 
         this.type = type;
     }

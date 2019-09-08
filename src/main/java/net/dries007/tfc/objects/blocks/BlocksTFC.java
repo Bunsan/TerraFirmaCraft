@@ -12,19 +12,21 @@ import net.minecraft.block.BlockChest;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fluids.BlockFluidBase;
-import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.registries.IForgeRegistry;
 
+import net.dries007.tfc.TerraFirmaCraft;
 import net.dries007.tfc.api.registries.TFCRegistries;
 import net.dries007.tfc.api.types.*;
-import net.dries007.tfc.objects.blocks.crops.BlockCropTFC;
+import net.dries007.tfc.objects.blocks.agriculture.*;
 import net.dries007.tfc.objects.blocks.devices.*;
 import net.dries007.tfc.objects.blocks.metal.BlockAnvilTFC;
 import net.dries007.tfc.objects.blocks.metal.BlockIngotPile;
@@ -34,9 +36,12 @@ import net.dries007.tfc.objects.blocks.plants.BlockPlantTFC;
 import net.dries007.tfc.objects.blocks.stone.*;
 import net.dries007.tfc.objects.blocks.wood.*;
 import net.dries007.tfc.objects.fluids.FluidsTFC;
+import net.dries007.tfc.objects.fluids.properties.FluidWrapper;
 import net.dries007.tfc.objects.items.itemblock.*;
 import net.dries007.tfc.objects.te.*;
+import net.dries007.tfc.util.agriculture.BerryBush;
 import net.dries007.tfc.util.agriculture.Crop;
+import net.dries007.tfc.util.agriculture.FruitTree;
 
 import static net.dries007.tfc.api.types.Rock.Type.*;
 import static net.dries007.tfc.api.util.TFCConstants.MOD_ID;
@@ -48,70 +53,31 @@ import static net.dries007.tfc.util.Helpers.getNull;
 @GameRegistry.ObjectHolder(MOD_ID)
 public final class BlocksTFC
 {
-    @GameRegistry.ObjectHolder("fluid/salt_water")
-    public static final BlockFluidBase FLUID_SALT_WATER = getNull();
-    @GameRegistry.ObjectHolder("fluid/fresh_water")
-    public static final BlockFluidBase FLUID_FRESH_WATER = getNull();
-    @GameRegistry.ObjectHolder("fluid/hot_water")
-    public static final BlockFluidBase FLUID_HOT_WATER = getNull();
-    @GameRegistry.ObjectHolder("fluid/finite_salt_water")
-    public static final BlockFluidBase FLUID_FINITE_SALT_WATER = getNull();
-    @GameRegistry.ObjectHolder("fluid/finite_fresh_water")
-    public static final BlockFluidBase FLUID_FINITE_FRESH_WATER = getNull();
-    @GameRegistry.ObjectHolder("fluid/finite_hot_water")
-    public static final BlockFluidBase FLUID_FINITE_HOT_WATER = getNull();
-    @GameRegistry.ObjectHolder("fluid/rum")
-    public static final BlockFluidBase FLUID_RUM = getNull();
-    @GameRegistry.ObjectHolder("fluid/beer")
-    public static final BlockFluidBase FLUID_BEER = getNull();
-    @GameRegistry.ObjectHolder("fluid/whiskey")
-    public static final BlockFluidBase FLUID_WHISKEY = getNull();
-    @GameRegistry.ObjectHolder("fluid/rye_whiskey")
-    public static final BlockFluidBase FLUID_RYE_WHISKEY = getNull();
-    @GameRegistry.ObjectHolder("fluid/corn_whiskey")
-    public static final BlockFluidBase FLUID_CORN_WHISKEY = getNull();
-    @GameRegistry.ObjectHolder("fluid/sake")
-    public static final BlockFluidBase FLUID_SAKE = getNull();
-    @GameRegistry.ObjectHolder("fluid/vodka")
-    public static final BlockFluidBase FLUID_VODKA = getNull();
-    @GameRegistry.ObjectHolder("fluid/cider")
-    public static final BlockFluidBase FLUID_CIDER = getNull();
-    @GameRegistry.ObjectHolder("fluid/vinegar")
-    public static final BlockFluidBase FLUID_VINEGAR = getNull();
-    @GameRegistry.ObjectHolder("fluid/brine")
-    public static final BlockFluidBase FLUID_BRINE = getNull();
-    @GameRegistry.ObjectHolder("fluid/milk")
-    public static final BlockFluidBase FLUID_MILK = getNull();
-    @GameRegistry.ObjectHolder("fluid/olive_oil")
-    public static final BlockFluidBase FLUID_OLIVE_OIL = getNull();
-    @GameRegistry.ObjectHolder("fluid/tannin")
-    public static final BlockFluidBase FLUID_TANNIN = getNull();
-    @GameRegistry.ObjectHolder("fluid/limewater")
-    public static final BlockFluidBase FLUID_LIMEWATER = getNull();
-    @GameRegistry.ObjectHolder("fluid/milk_curdled")
-    public static final BlockFluidBase FLUID_MILK_CURDLED = getNull();
-    @GameRegistry.ObjectHolder("fluid/milk_vinegar")
-    public static final BlockFluidBase FLUID_MILK_VINEGAR = getNull();
+    @GameRegistry.ObjectHolder("ceramics/fired/large_vessel")
+    public static final BlockLargeVessel FIRED_LARGE_VESSEL = getNull();
 
     public static final BlockDebug DEBUG = getNull();
     public static final BlockPeat PEAT = getNull();
     public static final BlockPeat PEAT_GRASS = getNull();
     public static final BlockFirePit FIREPIT = getNull();
     public static final BlockThatch THATCH = getNull();
+    public static final BlockThatchBed THATCH_BED = getNull();
     public static final BlockPitKiln PIT_KILN = getNull();
     public static final BlockPlacedItemFlat PLACED_ITEM_FLAT = getNull();
     public static final BlockPlacedItem PLACED_ITEM = getNull();
     public static final BlockPlacedHide PLACED_HIDE = getNull();
     public static final BlockCharcoalPile CHARCOAL_PILE = getNull();
+    public static final BlockNestBox NEST_BOX = getNull();
     public static final BlockLogPile LOG_PILE = getNull();
     public static final BlockIngotPile INGOT_PILE = getNull();
-    public static final BlockTorchTFC TORCH = getNull();
     public static final BlockCharcoalForge CHARCOAL_FORGE = getNull();
     public static final BlockCrucible CRUCIBLE = getNull();
     public static final BlockMolten MOLTEN = getNull();
     public static final BlockBlastFurnace BLAST_FURNACE = getNull();
     public static final BlockBloom BLOOM = getNull();
     public static final BlockBloomery BLOOMERY = getNull();
+    public static final BlockQuern QUERN = getNull();
+    public static final BlockIceTFC SEA_ICE = getNull();
 
     // All these are for use in model registration. Do not use for block lookups.
     // Use the static get methods in the classes instead.
@@ -138,6 +104,15 @@ public final class BlocksTFC
     private static ImmutableList<BlockCropTFC> allCropBlocks;
     private static ImmutableList<BlockPlantTFC> allPlantBlocks;
     private static ImmutableList<BlockPlantTFC> allGrassBlocks;
+    private static ImmutableList<BlockLoom> allLoomBlocks;
+    private static ImmutableList<BlockSupport> allSupportBlocks;
+
+    private static ImmutableList<BlockFruitTreeSapling> allFruitTreeSaplingBlocks;
+    private static ImmutableList<BlockFruitTreeTrunk> allFruitTreeTrunkBlocks;
+    private static ImmutableList<BlockFruitTreeBranch> allFruitTreeBranchBlocks;
+    private static ImmutableList<BlockFruitTreeLeaves> allFruitTreeLeavesBlocks;
+
+    private static ImmutableList<BlockBerryBush> allBerryBushBlocks;
 
 
     public static ImmutableList<ItemBlock> getAllNormalItemBlocks()
@@ -250,12 +225,47 @@ public final class BlocksTFC
         return allGrassBlocks;
     }
 
+    public static ImmutableList<BlockLoom> getAllLoomBlocks()
+    {
+        return allLoomBlocks;
+    }
+
+    public static ImmutableList<BlockSupport> getAllSupportBlocks()
+    {
+        return allSupportBlocks;
+    }
+
+    public static ImmutableList<BlockFruitTreeSapling> getAllFruitTreeSaplingBlocks()
+    {
+        return allFruitTreeSaplingBlocks;
+    }
+
+    public static ImmutableList<BlockFruitTreeTrunk> getAllFruitTreeTrunkBlocks()
+    {
+        return allFruitTreeTrunkBlocks;
+    }
+
+    public static ImmutableList<BlockFruitTreeBranch> getAllFruitTreeBranchBlocks()
+    {
+        return allFruitTreeBranchBlocks;
+    }
+
+    public static ImmutableList<BlockFruitTreeLeaves> getAllFruitTreeLeavesBlocks()
+    {
+        return allFruitTreeLeavesBlocks;
+    }
+
+    public static ImmutableList<BlockBerryBush> getAllBerryBushBlocks()
+    {
+        return allBerryBushBlocks;
+    }
+
     @SubscribeEvent
     @SuppressWarnings("ConstantConditions")
     public static void registerBlocks(RegistryEvent.Register<Block> event)
     {
         // This is called here because it needs to wait until Metal registry has fired
-        FluidsTFC.preInit();
+        FluidsTFC.registerFluids();
 
         IForgeRegistry<Block> r = event.getRegistry();
 
@@ -267,23 +277,50 @@ public final class BlocksTFC
         normalItemBlocks.add(new ItemBlockTFC(register(r, "peat", new BlockPeat(Material.GROUND), CT_ROCK_BLOCKS)));
         normalItemBlocks.add(new ItemBlockTFC(register(r, "peat_grass", new BlockPeatGrass(Material.GRASS), CT_ROCK_BLOCKS)));
 
-        normalItemBlocks.add(new ItemBlockTFC(register(r, "thatch", new BlockThatch(Material.PLANTS), CT_DECORATIONS)));
+        normalItemBlocks.add(new ItemBlockTFC(register(r, "thatch", new BlockThatch(), CT_DECORATIONS)));
+        normalItemBlocks.add(new ItemBlockTFC(register(r, "fire_bricks", new BlockFireBrick(), CT_DECORATIONS)));
 
+        normalItemBlocks.add(new ItemBlockTFC(register(r, "quern", new BlockQuern(), CT_MISC)));
         normalItemBlocks.add(new ItemBlockTFC(register(r, "crucible", new BlockCrucible(), CT_MISC)));
         normalItemBlocks.add(new ItemBlockTFC(register(r, "blast_furnace", new BlockBlastFurnace(), CT_MISC)));
         inventoryItemBlocks.add(new ItemBlockTFC(register(r, "bellows", new BlockBellows(), CT_MISC)));
         inventoryItemBlocks.add(new ItemBlockTFC(register(r, "bloomery", new BlockBloomery(), CT_MISC)));
+        inventoryItemBlocks.add(new ItemBlockTFC(register(r, "nest_box", new BlockNestBox(), CT_MISC)));
+        inventoryItemBlocks.add(new ItemBlockSluice(register(r, "sluice", new BlockSluice(), CT_MISC)));
+
+        normalItemBlocks.add(new ItemBlockTFC(register(r, "sea_ice", new BlockIceTFC(FluidsTFC.SALT_WATER.get()), CT_MISC)));
+
+        normalItemBlocks.add(new ItemBlockLargeVessel(register(r, "ceramics/fired/large_vessel", new BlockLargeVessel(), CT_POTTERY)));
 
         {
             Builder<BlockFluidBase> b = ImmutableList.builder();
-            for (Fluid fluid : FluidsTFC.getAllInfiniteFluids())
-                registerFluid(b, r, fluid, Material.WATER);
-            for (Fluid fluid : FluidsTFC.getAllAlcoholsFluids())
-                b.add(register(r, "fluid/" + fluid.getName(), new BlockFluidFiniteTFC(fluid, FluidsTFC.MATERIAL_ALCOHOL)));
-            for (Fluid fluid : FluidsTFC.getAllOtherFiniteFluids())
-                b.add(register(r, "fluid/" + fluid.getName(), new BlockFluidFiniteTFC(fluid, Material.WATER)));
-            for (Fluid fluid : FluidsTFC.getAllMetalFluids())
-                b.add(register(r, "fluid/" + fluid.getName(), new BlockFluidFiniteTFC(fluid, Material.LAVA)));
+            // We always want to register our water variants, as they absolutely need special subclasses
+            b.add(
+                register(r, "fluid/hot_water", new BlockFluidHotWater()),
+                register(r, "fluid/fresh_water", new BlockFluidWater(FluidsTFC.FRESH_WATER.get(), Material.WATER, false)),
+                register(r, "fluid/salt_water", new BlockFluidWater(FluidsTFC.SALT_WATER.get(), Material.WATER, true))
+            );
+            for (FluidWrapper wrapper : FluidsTFC.getAllAlcoholsFluids())
+            {
+                if (wrapper.isDefault())
+                {
+                    b.add(register(r, "fluid/" + wrapper.get().getName(), new BlockFluidTFC(wrapper.get(), Material.WATER)));
+                }
+            }
+            for (FluidWrapper wrapper : FluidsTFC.getAllOtherFiniteFluids())
+            {
+                if (wrapper.isDefault())
+                {
+                    b.add(register(r, "fluid/" + wrapper.get().getName(), new BlockFluidTFC(wrapper.get(), Material.WATER)));
+                }
+            }
+            for (FluidWrapper wrapper : FluidsTFC.getAllMetalFluids())
+            {
+                if (wrapper.isDefault())
+                {
+                    b.add(register(r, "fluid/" + wrapper.get().getName(), new BlockFluidTFC(wrapper.get(), Material.LAVA)));
+                }
+            }
             allFluidBlocks = b.build();
         }
 
@@ -296,9 +333,13 @@ public final class BlocksTFC
             allBlockRockVariants.forEach(x ->
             {
                 if (x.getType() == Rock.Type.SAND)
+                {
                     normalItemBlocks.add(new ItemBlockHeat(x, 1, 600));
-                else
+                }
+                else if (x.getType() != Rock.Type.SPIKE)
+                {
                     normalItemBlocks.add(new ItemBlockTFC(x));
+                }
             });
         }
 
@@ -322,6 +363,8 @@ public final class BlocksTFC
             Builder<BlockToolRack> toolRacks = ImmutableList.builder();
             Builder<ItemBlockBarrel> barrelItems = ImmutableList.builder();
             Builder<BlockPlantTFC> plants = ImmutableList.builder();
+            Builder<BlockLoom> looms = ImmutableList.builder();
+            Builder<BlockSupport> supports = ImmutableList.builder();
 
             // This loop is split up to organize the ordering of the creative tab
             // Do not optimize these loops back together
@@ -354,6 +397,9 @@ public final class BlocksTFC
 
                 toolRacks.add(register(r, "wood/tool_rack/" + wood.getRegistryName().getPath(), new BlockToolRack(wood), CT_DECORATIONS));
                 barrelItems.add(new ItemBlockBarrel(register(r, "wood/barrel/" + wood.getRegistryName().getPath(), new BlockBarrel(), CT_DECORATIONS)));
+
+                looms.add(register(r, "wood/loom/" + wood.getRegistryName().getPath(), new BlockLoom(wood), CT_WOOD));
+                supports.add(register(r, "wood/support/" + wood.getRegistryName().getPath(), new BlockSupport(wood), CT_WOOD));
             }
 
             allLogBlocks = logs.build();
@@ -364,6 +410,8 @@ public final class BlocksTFC
             allTrapDoorWoodBlocks = trapDoors.build();
             allChestBlocks = chests.build();
             allToolRackBlocks = toolRacks.build();
+            allLoomBlocks = looms.build();
+            allSupportBlocks = supports.build();
 
             allBarrelItemBlocks = barrelItems.build();
 
@@ -376,6 +424,8 @@ public final class BlocksTFC
             allTrapDoorWoodBlocks.forEach(x -> inventoryItemBlocks.add(new ItemBlockTFC(x)));
             allChestBlocks.forEach(x -> normalItemBlocks.add(new ItemBlockTFC(x)));
             allToolRackBlocks.forEach(x -> normalItemBlocks.add(new ItemBlockTFC(x)));
+            allLoomBlocks.forEach(x -> normalItemBlocks.add(new ItemBlockTFC(x)));
+            allSupportBlocks.forEach(x -> normalItemBlocks.add(new ItemBlockTFC(x)));
         }
 
         {
@@ -397,16 +447,16 @@ public final class BlocksTFC
             // Full slabs are the same as full blocks, they are not saved to a list, they are kept track of by the halfslab version.
             for (Rock.Type type : new Rock.Type[] {SMOOTH, COBBLE, BRICKS})
                 for (Rock rock : TFCRegistries.ROCKS.getValuesCollection())
-                    register(r, "slab/full/" + (type.name() + "/" + rock.getRegistryName().getPath()).toLowerCase(), new BlockSlabTFC.Double(rock, type));
+                    register(r, "double_slab/" + (type.name() + "/" + rock.getRegistryName().getPath()).toLowerCase(), new BlockSlabTFC.Double(rock, type));
             for (Tree wood : TFCRegistries.TREES.getValuesCollection())
-                register(r, "slab/full/wood/" + wood.getRegistryName().getPath(), new BlockSlabTFC.Double(wood));
+                register(r, "double_slab/wood/" + wood.getRegistryName().getPath(), new BlockSlabTFC.Double(wood));
 
             // Slabs
             for (Rock.Type type : new Rock.Type[] {SMOOTH, COBBLE, BRICKS})
                 for (Rock rock : TFCRegistries.ROCKS.getValuesCollection())
-                    slab.add(register(r, "slab/half/" + (type.name() + "/" + rock.getRegistryName().getPath()).toLowerCase(), new BlockSlabTFC.Half(rock, type), CT_DECORATIONS));
+                    slab.add(register(r, "slab/" + (type.name() + "/" + rock.getRegistryName().getPath()).toLowerCase(), new BlockSlabTFC.Half(rock, type), CT_DECORATIONS));
             for (Tree wood : TFCRegistries.TREES.getValuesCollection())
-                slab.add(register(r, "slab/half/wood/" + wood.getRegistryName().getPath(), new BlockSlabTFC.Half(wood), CT_DECORATIONS));
+                slab.add(register(r, "slab/wood/" + wood.getRegistryName().getPath(), new BlockSlabTFC.Half(wood), CT_DECORATIONS));
 
             for (Rock rock : TFCRegistries.ROCKS.getValuesCollection())
                 inventoryItemBlocks.add(new ItemBlockTFC(register(r, "stone/button/" + rock.getRegistryName().getPath().toLowerCase(), new BlockButtonStoneTFC(rock), CT_DECORATIONS)));
@@ -450,6 +500,41 @@ public final class BlocksTFC
 
             allCropBlocks = b.build();
         }
+
+        {
+            Builder<BlockFruitTreeSapling> fSaplings = ImmutableList.builder();
+            Builder<BlockFruitTreeTrunk> fTrunks = ImmutableList.builder();
+            Builder<BlockFruitTreeBranch> fBranches = ImmutableList.builder();
+            Builder<BlockFruitTreeLeaves> fLeaves = ImmutableList.builder();
+
+            for (FruitTree tree : FruitTree.values())
+            {
+                fSaplings.add(register(r, "fruit_trees/sapling/" + tree.name().toLowerCase(), new BlockFruitTreeSapling(tree), CT_WOOD));
+                fTrunks.add(register(r, "fruit_trees/trunk/" + tree.name().toLowerCase(), new BlockFruitTreeTrunk(tree)));
+                fBranches.add(register(r, "fruit_trees/branch/" + tree.name().toLowerCase(), new BlockFruitTreeBranch(tree)));
+                fLeaves.add(register(r, "fruit_trees/leaves/" + tree.name().toLowerCase(), new BlockFruitTreeLeaves(tree), CT_WOOD));
+            }
+
+            allFruitTreeSaplingBlocks = fSaplings.build();
+            allFruitTreeTrunkBlocks = fTrunks.build();
+            allFruitTreeBranchBlocks = fBranches.build();
+            allFruitTreeLeavesBlocks = fLeaves.build();
+
+            Builder<BlockBerryBush> fBerry = ImmutableList.builder();
+
+            for (BerryBush bush : BerryBush.values())
+            {
+                fBerry.add(register(r, "berry_bush/" + bush.name().toLowerCase(), new BlockBerryBush(bush), CT_FOOD));
+            }
+
+            allBerryBushBlocks = fBerry.build();
+
+            //Add ItemBlocks
+            allFruitTreeSaplingBlocks.forEach(x -> inventoryItemBlocks.add(new ItemBlockTFC(x)));
+            allFruitTreeLeavesBlocks.forEach(x -> inventoryItemBlocks.add(new ItemBlockTFC(x)));
+            allBerryBushBlocks.forEach(x -> inventoryItemBlocks.add(new ItemBlockTFC(x)));
+        }
+
         {
 
             Builder<BlockPlantTFC> b = ImmutableList.builder();
@@ -467,7 +552,7 @@ public final class BlocksTFC
                 }
                 else
                 {
-                    normalItemBlocks.add(new ItemBlockPlant(blockPlant));
+                    normalItemBlocks.add(new ItemBlockTFC(blockPlant));
                 }
             }
         }
@@ -482,17 +567,15 @@ public final class BlocksTFC
             allGrassBlocks = b.build();
             for (BlockPlantTFC blockPlant : allGrassBlocks)
             {
-                normalItemBlocks.add(new ItemBlockPlant(blockPlant));
+                normalItemBlocks.add(new ItemBlockTFC(blockPlant));
             }
         }
 
-        inventoryItemBlocks.add(new ItemBlockTorchTFC(register(r, "torch", new BlockTorchTFC(), CT_MISC)));
-
-
+        // Registering JEI only blocks (for info)
+        inventoryItemBlocks.add(new ItemBlock(register(r, "firepit", new BlockFirePit())));
+        inventoryItemBlocks.add(new ItemBlock(register(r, "charcoal_forge", new BlockCharcoalForge())));
         // technical blocks
         // These have no ItemBlock or Creative Tab
-        register(r, "firepit", new BlockFirePit());
-        register(r, "charcoal_forge", new BlockCharcoalForge());
         register(r, "placed_item_flat", new BlockPlacedItemFlat());
         register(r, "placed_item", new BlockPlacedItem());
         register(r, "placed_hide", new BlockPlacedHide());
@@ -502,29 +585,16 @@ public final class BlocksTFC
         register(r, "pit_kiln", new BlockPitKiln());
         register(r, "molten", new BlockMolten());
         register(r, "bloom", new BlockBloom());
+        register(r, "thatch_bed", new BlockThatchBed());
 
         // Note: if you add blocks you don't need to put them in this list of todos. Feel free to add them where they make sense :)
-        // todo: pumpkin/melon ?
-        // todo: fruit tree stuff (leaves, saplings, logs)
-
-        // todo: supports (h & v)
-        // todo: farmland
-        // todo: barrels
-        // todo: wood trap doors
 
         // todo: metal lamps (on/off with states)
         // todo: sluice
-        // todo: quern
-        // todo: loom
-        // todo: bloom/molten blocks
-        // todo: large vessels
-        // todo: nestbox
-        // todo: leather rack
         // todo: grill
         // todo: metal trap doors
         // todo: smoke rack (placed with any string, so event based?) + smoke blocks or will we use particles?
         // todo: custom flower pot (TE based probably, unless we want to not care about the dirt in it)
-
         // todo: custom hopper or just a separate press block? I prefer the separate block, this will simplify things a lot.
 
         allNormalItemBlocks = normalItemBlocks.build();
@@ -533,18 +603,18 @@ public final class BlocksTFC
         // Register Tile Entities
         // Putting tile entity registration in the respective block can call it multiple times. Just put here to avoid duplicates
 
-        // Generic classes
         register(TETickCounter.class, "tick_counter");
         register(TEPlacedItem.class, "placed_item");
         register(TEPlacedItemFlat.class, "placed_item_flat");
         register(TEPlacedHide.class, "placed_hide");
-        register(TETorchTFC.class, "torch");
         register(TEPitKiln.class, "pit_kiln");
         register(TEChestTFC.class, "chest");
+        register(TENestBox.class, "nest_box");
         register(TELogPile.class, "log_pile");
         register(TEIngotPile.class, "ingot_pile");
         register(TEFirePit.class, "fire_pit");
         register(TEToolRack.class, "tool_rack");
+        register(TELoom.class, "loom");
         register(TEBellows.class, "bellows");
         register(TEBarrel.class, "barrel");
         register(TECharcoalForge.class, "charcoal_forge");
@@ -555,6 +625,21 @@ public final class BlocksTFC
         register(TEBloomery.class, "bloomery");
         register(TEBloom.class, "bloom");
         register(TEMetalSheet.class, "metal_sheet");
+        register(TEQuern.class, "quern");
+        register(TELargeVessel.class, "large_vessel");
+        register(TESluice.class, "sluice");
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void registerVanillaOverrides(RegistryEvent.Register<Block> event)
+    {
+        // Vanilla Overrides. Used for small tweaks on vanilla items, rather than replacing them outright
+        TerraFirmaCraft.getLog().info("The below warnings about unintended overrides are normal. The override is intended. ;)");
+        event.getRegistry().registerAll(
+            new BlockIceTFC(FluidsTFC.FRESH_WATER.get()).setRegistryName("minecraft", "ice").setTranslationKey("ice"),
+            new BlockSnowTFC().setRegistryName("minecraft", "snow_layer").setTranslationKey("snow"),
+            new BlockTorchTFC().setRegistryName("minecraft", "torch").setTranslationKey("torch")
+        );
     }
 
     public static boolean isWater(IBlockState current)
@@ -564,12 +649,17 @@ public final class BlocksTFC
 
     public static boolean isFreshWater(IBlockState current)
     {
-        return current == FLUID_FRESH_WATER.getDefaultState();
+        return current == FluidsTFC.FRESH_WATER.get().getBlock().getDefaultState();
     }
 
     public static boolean isSaltWater(IBlockState current)
     {
-        return current == FLUID_SALT_WATER.getDefaultState();
+        return current == FluidsTFC.SALT_WATER.get().getBlock().getDefaultState();
+    }
+
+    public static boolean isFreshWaterOrIce(IBlockState current)
+    {
+        return current.getBlock() == Blocks.ICE || isFreshWater(current);
     }
 
     public static boolean isRawStone(IBlockState current)
@@ -638,17 +728,6 @@ public final class BlocksTFC
         if (!(current.getBlock() instanceof BlockRockVariant)) return false;
         Rock.Type type = ((BlockRockVariant) current.getBlock()).getType();
         return type == GRASS || type == DRY_GRASS || type == DIRT || type == GRAVEL || type == RAW || type == SAND;
-    }
-
-    private static void registerFluid(Builder<BlockFluidBase> b, IForgeRegistry<Block> r, Fluid fluid, Material material)
-    {
-        BlockFluidBase block = new BlockFluidClassicTFC(fluid, material);
-        register(r, "fluid/" + fluid.getName(), block);
-        b.add(block);
-        // todo: these three lines are causing the "A mod has assigned a fluid to block {null}" are they nessecary?
-        block = new BlockFluidFiniteTFC(fluid, material);
-        register(r, "fluid/finite_" + fluid.getName(), block);
-        b.add(block);
     }
 
     private static <T extends Block> T register(IForgeRegistry<Block> r, String name, T block, CreativeTabs ct)

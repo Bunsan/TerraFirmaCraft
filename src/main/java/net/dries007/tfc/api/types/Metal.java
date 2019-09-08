@@ -9,6 +9,7 @@ import java.util.function.BiFunction;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.Item;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.GameRegistry;
@@ -30,6 +31,12 @@ public class Metal extends IForgeRegistryEntry.Impl<Metal>
     public static final Metal WROUGHT_IRON = Helpers.getNull();
     @GameRegistry.ObjectHolder("tfc:pig_iron")
     public static final Metal PIG_IRON = Helpers.getNull();
+    @GameRegistry.ObjectHolder("tfc:bronze")
+    public static final Metal BRONZE = Helpers.getNull();
+    @GameRegistry.ObjectHolder("tfc:bismuth_bronze")
+    public static final Metal BISMUTH_BRONZE = Helpers.getNull();
+    @GameRegistry.ObjectHolder("tfc:black_bronze")
+    public static final Metal BLACK_BRONZE = Helpers.getNull();
 
     private final Tier tier;
     private final float specificHeat;
@@ -38,6 +45,7 @@ public class Metal extends IForgeRegistryEntry.Impl<Metal>
     private final int color;
 
     private final Item.ToolMaterial toolMetal;
+    private final IArmorMaterialTFC armorMetal;
 
     /**
      * This is a registry object that will create a number of things.
@@ -50,7 +58,7 @@ public class Metal extends IForgeRegistryEntry.Impl<Metal>
      * @param color        color of the metal when in fluid form. Used to auto generate a fluid texture. In future this may be used to color items as well
      * @param toolMetal    The tool material. Null if metal is not able to create tools
      */
-    public Metal(@Nonnull ResourceLocation name, Tier tier, boolean usable, float specificHeat, float meltTemp, int color, @Nullable Item.ToolMaterial toolMetal)
+    public Metal(@Nonnull ResourceLocation name, Tier tier, boolean usable, float specificHeat, float meltTemp, int color, @Nullable Item.ToolMaterial toolMetal, @Nullable IArmorMaterialTFC armorMetal)
     {
         this.usable = usable;
         this.tier = tier;
@@ -58,6 +66,7 @@ public class Metal extends IForgeRegistryEntry.Impl<Metal>
         this.meltTemp = meltTemp;
         this.color = color;
         this.toolMetal = toolMetal;
+        this.armorMetal = armorMetal;
 
         setRegistryName(name);
     }
@@ -68,10 +77,15 @@ public class Metal extends IForgeRegistryEntry.Impl<Metal>
         return toolMetal;
     }
 
+    @Nullable
+    public IArmorMaterialTFC getArmorMetal() { return armorMetal; }
+
     public boolean isToolMetal()
     {
         return getToolMetal() != null;
     }
+
+    public boolean isArmorMetal() { return getArmorMetal() != null; }
 
     public Tier getTier()
     {
@@ -107,7 +121,7 @@ public class Metal extends IForgeRegistryEntry.Impl<Metal>
     }
 
     /**
-     * Metals:
+     * Metals / Anvils:
      * T0 - Stone - Work None, Weld T1
      * T1 - Copper - Work T1, Weld T2
      * T2 - Bronze / Bismuth Bronze / Black Bronze - Work T2, Weld T3
@@ -118,9 +132,10 @@ public class Metal extends IForgeRegistryEntry.Impl<Metal>
      *
      * Devices:
      * T0 - Stone Anvil
-     * T1 - Pit Kiln
+     * T1 - Pit Kiln / Fire pit
+     * T2 - Forge
      * T3 - Bloomery
-     * T4 - Blast Furnace
+     * T4 - Blast Furnace / Crucible
      */
     public enum Tier
     {
@@ -159,7 +174,7 @@ public class Metal extends IForgeRegistryEntry.Impl<Metal>
 
     public enum ItemType
     {
-        INGOT(false, 100, ItemIngot::new, true, 0.5f, "XXXX", "X  X", "X  X", "X  X", "XXXX"),
+        INGOT(false, -1, 100, ItemIngot::new, true, "XXXX", "X  X", "X  X", "X  X", "XXXX"),
         DOUBLE_INGOT(false, 200),
         SCRAP(false, 100),
         DUST(false, 100),
@@ -187,7 +202,7 @@ public class Metal extends IForgeRegistryEntry.Impl<Metal>
         MACE_HEAD(true, 200, true, "XX XX", "X   X", "X   X", "X   X", "XX XX"),
         SAW(true, 100, ItemMetalTool::new),
         SAW_BLADE(true, 100, true, "XXX  ", "XX   ", "X   X", "    X", "  XXX"),
-        JAVELIN(true, 100, ItemMetalTool::new), // todo: special class?
+        JAVELIN(true, 100, ItemMetalJavelin::new),
         JAVELIN_HEAD(true, 100, true, "XX   ", "X    ", "     ", "X   X", "XX XX"),
         HAMMER(true, 100, ItemMetalTool::new),
         HAMMER_HEAD(true, 100, true, "XXXXX", "     ", "     ", "XX XX", "XXXXX"),
@@ -195,17 +210,20 @@ public class Metal extends IForgeRegistryEntry.Impl<Metal>
         PROPICK_HEAD(true, 100, true, "XXXXX", "    X", " XXX ", " XXXX", "XXXXX"),
         KNIFE(true, 100, ItemMetalTool::new),
         KNIFE_BLADE(true, 100, true, "XX X", "X  X", "X  X", "X  X", "X  X"),
-        SCYTHE(true, 100, ItemMetalTool::new), // todo: special class + implementation
+        SCYTHE(true, 100, ItemMetalTool::new),
         SCYTHE_BLADE(true, 100, true, "XXXXX", "X    ", "    X", "  XXX", "XXXXX"),
+        SHEARS(true, 200, ItemMetalShears::new),
 
-        UNFINISHED_HELMET(true, 200),
-        HELMET(true, 400, ItemMetalArmor::new),
+        UNFINISHED_HELMET(true, 400),
+        HELMET(true, 0, 600, ItemMetalArmor::new),
         UNFINISHED_CHESTPLATE(true, 400),
-        CHESTPLATE(true, 800, ItemMetalArmor::new),
+        CHESTPLATE(true, 1, 800, ItemMetalArmor::new),
         UNFINISHED_GREAVES(true, 400),
-        GREAVES(true, 600, ItemMetalArmor::new),
+        GREAVES(true, 2, 600, ItemMetalArmor::new),
         UNFINISHED_BOOTS(true, 200),
-        BOOTS(true, 200, ItemMetalArmor::new);
+        BOOTS(true, 3, 400, ItemMetalArmor::new),
+
+        SHIELD(true, 400, ItemMetalShield::new);
 
         public static Item create(Metal metal, ItemType type)
         {
@@ -213,30 +231,25 @@ public class Metal extends IForgeRegistryEntry.Impl<Metal>
         }
 
         private final boolean toolItem;
+        private final int armorSlot; //Which armor slot this armor should go, from 0 = Helmet to 4 = Boots
         private final int smeltAmount;
         private final boolean hasMold;
-        private final float moldReturnRate; // Used as 'if (Constants.RNG.nextFloat() > type.moldReturnRate) return Empty'
         private final BiFunction<Metal, ItemType, Item> supplier;
         private final String[] pattern;
 
-        ItemType(boolean toolItem, int smeltAmount, @Nonnull BiFunction<Metal, ItemType, Item> supplier, boolean hasMold, float moldReturnRate, String... moldPattern)
+        ItemType(boolean toolItem, int armorSlot, int smeltAmount, @Nonnull BiFunction<Metal, ItemType, Item> supplier, boolean hasMold, String... moldPattern)
         {
             this.toolItem = toolItem;
+            this.armorSlot = armorSlot;
             this.smeltAmount = smeltAmount;
             this.supplier = supplier;
             this.hasMold = hasMold;
-            this.moldReturnRate = moldReturnRate;
             this.pattern = moldPattern;
-        }
-
-        ItemType(boolean toolItem, int smeltAmount, @Nonnull BiFunction<Metal, ItemType, Item> supplier, boolean hasMold, String... moldPattern)
-        {
-            this(toolItem, smeltAmount, supplier, hasMold, 0, moldPattern);
         }
 
         ItemType(boolean toolItem, int smeltAmount, boolean hasMold, String... moldPattern)
         {
-            this(toolItem, smeltAmount, ItemMetal::new, hasMold, moldPattern);
+            this(toolItem, -1, smeltAmount, ItemMetal::new, hasMold, moldPattern);
         }
 
         ItemType(boolean toolItem, int smeltAmount)
@@ -244,9 +257,14 @@ public class Metal extends IForgeRegistryEntry.Impl<Metal>
             this(toolItem, smeltAmount, false);
         }
 
+        ItemType(boolean toolItem, int armorSlot, int smeltAmount, @Nonnull BiFunction<Metal, ItemType, Item> supplier)
+        {
+            this(toolItem, armorSlot, smeltAmount, supplier, false);
+        }
+
         ItemType(boolean toolItem, int smeltAmount, @Nonnull BiFunction<Metal, ItemType, Item> supplier)
         {
-            this(toolItem, smeltAmount, supplier, false);
+            this(toolItem, -1, smeltAmount, supplier, false);
         }
 
         public boolean hasType(Metal metal)
@@ -267,11 +285,20 @@ public class Metal extends IForgeRegistryEntry.Impl<Metal>
         public boolean hasMold(@Nullable Metal metal)
         {
             if (metal == null)
+            {
+                // Query for should the mold exist during registration
                 return hasMold;
+            }
             if (this == ItemType.INGOT)
-                return metal.usable || metal == Metal.UNKNOWN;
+            {
+                // All ingots are able to be cast in molds
+                return true;
+            }
             if (hasMold)
+            {
+                // All tool metals can be used in tool molds with tier at most II
                 return metal.isToolMetal() && metal.getTier().isAtMost(Tier.TIER_II);
+            }
             return false;
         }
 
@@ -285,14 +312,38 @@ public class Metal extends IForgeRegistryEntry.Impl<Metal>
             return toolItem;
         }
 
+        public int getArmorSlot()
+        {
+            return armorSlot;
+        }
+
+        public boolean isArmor() { return armorSlot != -1; }
+
+        /**
+         * What armor slot this ItemArmor should use? If this is not armor, return the MainHand slot
+         *
+         * @return which slot this item should be equipped.
+         */
+        public EntityEquipmentSlot getEquipmentSlot()
+        {
+            switch (armorSlot)
+            {
+                case 0:
+                    return EntityEquipmentSlot.HEAD;
+                case 1:
+                    return EntityEquipmentSlot.CHEST;
+                case 2:
+                    return EntityEquipmentSlot.LEGS;
+                case 3:
+                    return EntityEquipmentSlot.FEET;
+                default:
+                    return EntityEquipmentSlot.MAINHAND;
+            }
+        }
+
         public int getSmeltAmount()
         {
             return smeltAmount;
-        }
-
-        public float getMoldReturnRate()
-        {
-            return moldReturnRate;
         }
 
         public String[] getPattern()

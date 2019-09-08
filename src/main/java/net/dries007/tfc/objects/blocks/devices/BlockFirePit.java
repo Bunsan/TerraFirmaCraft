@@ -30,22 +30,22 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
+import net.dries007.tfc.api.util.IBellowsConsumerBlock;
 import net.dries007.tfc.client.TFCGuiHandler;
+import net.dries007.tfc.objects.blocks.property.ILightableBlock;
 import net.dries007.tfc.objects.items.ItemFireStarter;
 import net.dries007.tfc.objects.te.TEBellows;
 import net.dries007.tfc.objects.te.TEFirePit;
 import net.dries007.tfc.util.Helpers;
-import net.dries007.tfc.util.IBellowsConsumerBlock;
-import net.dries007.tfc.util.ILightableBlock;
 
 @ParametersAreNonnullByDefault
 public class BlockFirePit extends Block implements IBellowsConsumerBlock, ILightableBlock
 {
-    private static final AxisAlignedBB AABB = new AxisAlignedBB(0.0625D, 0.0D, 0.0625D, 0.9375D, 0.03125D, 0.9375D);
+    private static final AxisAlignedBB AABB = new AxisAlignedBB(0, 0.0D, 0, 1, 0.125, 1);
 
     public BlockFirePit()
     {
-        super(Material.FIRE);
+        super(Material.WOOD);
         setDefaultState(blockState.getBaseState().withProperty(LIT, false));
         disableStats();
         setTickRandomly(true);
@@ -129,6 +129,17 @@ public class BlockFirePit extends Block implements IBellowsConsumerBlock, ILight
     {
         if (!canBePlacedOn(worldIn, pos.add(0, -1, 0)))
             worldIn.setBlockToAir(pos);
+    }
+
+    @Override
+    public void breakBlock(World worldIn, BlockPos pos, IBlockState state)
+    {
+        TEFirePit tile = Helpers.getTE(worldIn, pos, TEFirePit.class);
+        if (tile != null)
+        {
+            tile.onBreakBlock(worldIn, pos);
+        }
+        super.breakBlock(worldIn, pos, state);
     }
 
     @Override

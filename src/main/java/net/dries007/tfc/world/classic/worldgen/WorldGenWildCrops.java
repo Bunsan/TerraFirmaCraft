@@ -17,11 +17,11 @@ import net.minecraft.world.gen.feature.WorldGenerator;
 import net.dries007.tfc.TerraFirmaCraft;
 import net.dries007.tfc.api.types.ICrop;
 import net.dries007.tfc.objects.blocks.BlocksTFC;
-import net.dries007.tfc.objects.blocks.crops.BlockCropTFC;
-import net.dries007.tfc.world.classic.ClimateTFC;
+import net.dries007.tfc.objects.blocks.agriculture.BlockCropTFC;
+import net.dries007.tfc.util.climate.ClimateTFC;
 import net.dries007.tfc.world.classic.chunkdata.ChunkDataTFC;
 
-import static net.dries007.tfc.objects.blocks.crops.BlockCropTFC.WILD;
+import static net.dries007.tfc.objects.blocks.agriculture.BlockCropTFC.WILD;
 
 @ParametersAreNonnullByDefault
 public class WorldGenWildCrops extends WorldGenerator
@@ -44,18 +44,17 @@ public class WorldGenWildCrops extends WorldGenerator
         {
             return false;
         }
-
         ICrop crop = crops.get(rng.nextInt(crops.size()));
         BlockCropTFC cropBlock = BlockCropTFC.get(crop);
 
-        float temperature = ClimateTFC.getAverageBiomeTemp(world, start);
+        float temperature = ClimateTFC.getAvgTemp(world, start);
         float rainfall = ChunkDataTFC.getRainfall(world, start);
         if (crop.isValidConditions(temperature, rainfall))
         {
             for (int i = 0; i < 14 + rng.nextInt(5); ++i)
             {
                 BlockPos pos = start.add(rng.nextInt(8) - rng.nextInt(8), rng.nextInt(4) - rng.nextInt(4), rng.nextInt(8) - rng.nextInt(8));
-                if (world.isAirBlock(pos) || cropBlock.canPlaceBlockAt(world, pos))
+                if (world.isAirBlock(pos) && cropBlock.canPlaceBlockAt(world, pos))
                 {
                     if (BlocksTFC.isSoil(world.getBlockState(pos.add(0, -1, 0))))
                     {
@@ -66,6 +65,7 @@ public class WorldGenWildCrops extends WorldGenerator
                 }
             }
         }
+
         return true;
     }
 }
